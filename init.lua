@@ -936,11 +936,12 @@ signs_lib.register_fence_with_sign("default:fence_wood", "signs:sign_post")
 
 -- restore signs' text after /clearobjects and the like
 
-minetest.register_abm({
+minetest.register_lbm({
 	nodenames = signs_lib.sign_node_list,
-	interval = 15,
-	chance = 1,
-	action = function(pos, node, active_object_count, active_object_count_wider)
+	name = "signs_lib:restore_sign_text",
+	label = "Restore sign text",
+	run_at_every_load = true,
+	action = function(pos, node)
 		signs_lib.update_sign(pos)
 	end
 })
