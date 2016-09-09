@@ -1008,20 +1008,12 @@ minetest.register_craft({
 	}
 })
 
---Alternate recipes.
+--Alternate recipe
 
 minetest.register_craft({
     	output = "locked_sign:sign_wall_locked",
     	recipe = {
         	{default_sign},
-        	{"default:steel_ingot"},
-    },
-})
-
-minetest.register_craft({
-    	output = "locked_sign:sign_wall_locked",
-    	recipe = {
-        	{default_sign_metal},
         	{"default:steel_ingot"},
     },
 })
