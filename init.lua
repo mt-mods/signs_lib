@@ -304,14 +304,16 @@ local function fill_line(x, y, w, c)
 	return table.concat(tex)
 end
 
-local function make_line_texture(line, lineno)
+local function make_line_texture(line, lineno, pos)
 
 	local width = 0
 	local maxw = 0
 
 	local words = { }
+	local n = minetest.registered_nodes[minetest.get_node(pos).name]
+	local defaultcolor = n.defaultcolor or 0
 
-	local cur_color = 0
+	local cur_color = tonumber(defaultcolor, 16)
 
 	-- We check which chars are available here.
 	for word_i, word in ipairs(line) do
@@ -392,12 +394,12 @@ local function make_line_texture(line, lineno)
 	return table.concat(texture), lineno
 end
 
-local function make_sign_texture(lines)
+local function make_sign_texture(lines, pos)
 	local texture = { ("[combine:%dx%d"):format(SIGN_WIDTH, LINE_HEIGHT * NUMBER_OF_LINES) }
 	local lineno = 0
 	for i = 1, #lines do
 		if lineno >= NUMBER_OF_LINES then break end
-		local linetex, ln = make_line_texture(lines[i], lineno)
+		local linetex, ln = make_line_texture(lines[i], lineno, pos)
 		table.insert(texture, linetex)
 		lineno = ln + 1
 	end
@@ -405,10 +407,10 @@ local function make_sign_texture(lines)
 	return table.concat(texture, "")
 end
 
-local function set_obj_text(obj, text, new)
+local function set_obj_text(obj, text, new, pos)
 	local split = new and split_lines_and_words or split_lines_and_words_old
 	obj:set_properties({
-		textures={make_sign_texture(split(text))},
+		textures={make_sign_texture(split(text), pos)},
 		visual_size = TEXT_SCALE,
 	})
 end
@@ -498,7 +500,7 @@ signs_lib.update_sign = function(pos, fields, owner)
 			if found then
 				v:remove()
 			else
-				set_obj_text(v, text, new)
+				set_obj_text(v, text, new, pos)
 				found = true
 			end
 		end
@@ -841,8 +843,9 @@ end
 -- metal, colored signs
 
 local sign_colors = { "green", "yellow", "red", "white_red", "white_black", "orange", "blue", "brown" }
+local sign_default_text_colors = { "f", "0", "f", "4", "0", "0", "f", "f" }
 
-for _, color in ipairs(sign_colors) do
+for i, color in ipairs(sign_colors) do
 	minetest.register_node(":signs:sign_wall_"..color, {
 		description = S("Sign ("..color..", metal)"),
 		inventory_image = "signs_"..color.."_inv.png",
@@ -861,6 +864,7 @@ for _, color in ipairs(sign_colors) do
 			"signs_metal_back.png",
 			"signs_"..color.."_front.png"
 		},
+		defaultcolor = sign_default_text_colors[i],
 		groups = sign_groups,
 		on_place = function(itemstack, placer, pointed_thing)
 			return signs_lib.determine_sign_type(itemstack, placer, pointed_thing)
@@ -883,12 +887,13 @@ end
 local signs_text_on_activate
 
 signs_text_on_activate = function(self)
-	local meta = minetest.get_meta(self.object:getpos())
+	local pos = self.object:getpos()
+	local meta = minetest.get_meta(pos)
 	local text = meta:get_string("text")
 	local new = (meta:get_int("__signslib_new_format") ~= 0)
 	if text then
 		text = trim_input(text)
-		set_obj_text(self.object, text, new)
+		set_obj_text(self.object, text, new, pos)
 	end
 end
 
