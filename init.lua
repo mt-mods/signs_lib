@@ -510,7 +510,11 @@ signs_lib.update_sign = function(pos, fields, owner)
 	-- if there is no entity
 	local sign_info
 	local signnode = minetest.get_node(pos)
-	if signnode.name == "signs:sign_yard" then
+	local signname = signnode.name
+	local textpos = minetest.registered_nodes[signname].textpos
+	if textpos then
+		sign_info = textpos[minetest.get_node(pos).param2 + 1]
+	elseif signnode.name == "signs:sign_yard" then
 		sign_info = signs_lib.yard_sign_model.textpos[minetest.get_node(pos).param2 + 1]
 	elseif signnode.name == "signs:sign_hanging" then
 		sign_info = signs_lib.hanging_sign_model.textpos[minetest.get_node(pos).param2 + 1]
