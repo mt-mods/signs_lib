@@ -934,7 +934,8 @@ minetest.register_alias("sign_wall_locked", "locked_sign:sign_wall_locked")
 
 signs_lib.register_fence_with_sign("default:fence_wood", "signs:sign_post")
 
--- restore signs' text after /clearobjects and the like
+-- restore signs' text after /clearobjects and the like, the next time
+-- a block is reloaded by the server.
 
 minetest.register_lbm({
 	nodenames = signs_lib.sign_node_list,
