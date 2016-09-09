@@ -142,6 +142,7 @@ else
 end
 
 default_sign_metal = "default:sign_wall_steel"
+default_sign_metal_image = "default_sign_steel.png"
 
 --table copy
 
@@ -515,6 +516,7 @@ signs_lib.update_sign = function(pos, fields, owner)
 		sign_info = signs_lib.hanging_sign_model.textpos[minetest.get_node(pos).param2 + 1]
 	elseif string.find(signnode.name, "sign_wall") then
 		if signnode.name == default_sign
+		  or signnode.name == default_sign_metal
 		  or signnode.name == "locked_sign:sign_wall_locked" then
 			sign_info = signs_lib.regular_wall_sign_model.textpos[minetest.get_node(pos).param2 + 1]
 		else
@@ -535,6 +537,7 @@ end
 -- What kind of sign do we need to place, anyway?
 
 function signs_lib.determine_sign_type(itemstack, placer, pointed_thing, locked)
+	print("called signs_lib.determine_sign_type")
 	local name
 	name = minetest.get_node(pointed_thing.under).name
 	if fences_with_sign[name] then
@@ -556,11 +559,13 @@ function signs_lib.determine_sign_type(itemstack, placer, pointed_thing, locked)
 		end
 	end
 
+	print("protection and position okay")
 	local node=minetest.get_node(pointed_thing.under)
 
 	if minetest.registered_nodes[node.name] and minetest.registered_nodes[node.name].on_rightclick then
 		return minetest.registered_nodes[node.name].on_rightclick(pointed_thing.under, node, placer, itemstack)
 	else
+		print("target didn't have rightclick")
 		local above = pointed_thing.above
 		local under = pointed_thing.under
 		local dir = {x = under.x - above.x,
@@ -579,7 +584,7 @@ function signs_lib.determine_sign_type(itemstack, placer, pointed_thing, locked)
 		end
 
 		local fdir = minetest.dir_to_facedir(dir)
-
+		print("facedir = "..fdir)
 		local pt_name = minetest.get_node(under).name
 		local signname = itemstack:get_name()
 
@@ -589,11 +594,17 @@ function signs_lib.determine_sign_type(itemstack, placer, pointed_thing, locked)
 			minetest.add_node(above, {name = "signs:sign_hanging", param2 = fdir})
 		elseif wdir == 1 and signname == default_sign then
 			minetest.add_node(above, {name = "signs:sign_yard", param2 = fdir})
+		elseif signname == default_sign_metal then
+			minetest.add_node(above, {name = signname, param2 = wdir })
+			print("line 597")
 		elseif signname ~= default_sign
-		  and signname ~= "locked_sign:sign_wall_locked" then -- it's a metal wall sign.
+		  and signname ~= default_sign_metal
+		  and signname ~= "locked_sign:sign_wall_locked" then -- it's a signs_lib colored metal wall sign.
 			minetest.add_node(above, {name = signname, param2 = fdir})
+			print("line 602")
 		else -- it must be a default or locked wooden wall sign
 			minetest.add_node(above, {name = signname, param2 = wdir }) -- note it's wallmounted here!
+			print("line 605")
 			if locked then
 				local meta = minetest.get_meta(above)
 				local owner = placer:get_player_name()
@@ -794,6 +805,41 @@ minetest.register_node(":locked_sign:sign_wall_locked", {
 	end,
 	on_rotate = signs_lib.wallmounted_rotate
 })
+
+-- default metal sign, if defined
+
+if minetest.registered_nodes["default:sign_wall_steel"] then
+	minetest.register_node(":"..default_sign_metal, {
+		description = S("Sign"),
+		inventory_image = default_sign_metal_image,
+		wield_image = default_sign_metal_image,
+		node_placement_prediction = "",
+		sunlight_propagates = true,
+		paramtype = "light",
+		paramtype2 = "wallmounted",
+		drawtype = "nodebox",
+		node_box = signs_lib.regular_wall_sign_model.nodebox,
+		tiles = {"signs_wall_sign_metal.png"},
+		groups = sign_groups,
+
+		on_place = function(itemstack, placer, pointed_thing)
+			return signs_lib.determine_sign_type(itemstack, placer, pointed_thing)
+		end,
+		on_construct = function(pos)
+			signs_lib.construct_sign(pos)
+		end,
+		on_destruct = function(pos)
+			signs_lib.destruct_sign(pos)
+		end,
+		on_receive_fields = function(pos, formname, fields, sender)
+			signs_lib.receive_fields(pos, formname, fields, sender)
+		end,
+		on_punch = function(pos, node, puncher)
+			signs_lib.update_sign(pos)
+		end,
+		on_rotate = signs_lib.wallmounted_rotate
+	})
+end
 
 -- metal, colored signs
 
