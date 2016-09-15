@@ -312,9 +312,9 @@ local function make_line_texture(line, lineno, pos)
 
 	local words = { }
 	local n = minetest.registered_nodes[minetest.get_node(pos).name]
-	local defaultcolor = n.defaultcolor or 0
+	local default_color = n.default_color or 0
 
-	local cur_color = tonumber(defaultcolor, 16)
+	local cur_color = tonumber(default_color, 16)
 
 	-- We check which chars are available here.
 	for word_i, word in ipairs(line) do
@@ -867,7 +867,7 @@ for i, color in ipairs(sign_colors) do
 			"signs_metal_back.png",
 			"signs_"..color.."_front.png"
 		},
-		defaultcolor = sign_default_text_colors[i],
+		default_color = sign_default_text_colors[i],
 		groups = sign_groups,
 		on_place = function(itemstack, placer, pointed_thing)
 			return signs_lib.determine_sign_type(itemstack, placer, pointed_thing)
