@@ -118,18 +118,19 @@ signs_lib.gettext = S
 -- the list of standard sign nodes
 
 signs_lib.sign_node_list = {
-		"default:sign_wall_wood",
-		"signs:sign_yard",
-		"signs:sign_hanging",
-		"signs:sign_wall_green",
-		"signs:sign_wall_yellow",
-		"signs:sign_wall_red",
-		"signs:sign_wall_white_red",
-		"signs:sign_wall_white_black",
-		"signs:sign_wall_orange",
-		"signs:sign_wall_blue",
-		"signs:sign_wall_brown",
-		"locked_sign:sign_wall_locked"
+	"default:sign_wall_wood",
+	"default:sign_wall_steel",
+	"signs:sign_yard",
+	"signs:sign_hanging",
+	"signs:sign_wall_green",
+	"signs:sign_wall_yellow",
+	"signs:sign_wall_red",
+	"signs:sign_wall_white_red",
+	"signs:sign_wall_white_black",
+	"signs:sign_wall_orange",
+	"signs:sign_wall_blue",
+	"signs:sign_wall_brown",
+	"locked_sign:sign_wall_locked"
 }
 
 local default_sign, default_sign_image
