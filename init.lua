@@ -163,7 +163,7 @@ end
 
 -- infinite stacks
 
-if minetest.get_modpath("unified_inventory") or not minetest.setting_getbool("creative_mode") then
+if not minetest.setting_getbool("creative_mode") then
 	signs_lib.expect_infinite_stacks = false
 else
 	signs_lib.expect_infinite_stacks = true
