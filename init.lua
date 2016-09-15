@@ -31,6 +31,8 @@ end
 
 signs_lib.modpath = minetest.get_modpath("signs_lib")
 
+local DEFAULT_TEXT_SCALE = {x=0.8, y=0.5}
+
 signs_lib.regular_wall_sign_model = {
 	nodebox = {
 		type = "wallmounted",
@@ -178,8 +180,6 @@ local FONT_FMT_SIMPLE = "hdf_%02x.png"
 
 -- Path to the textures.
 local TP = MP.."/textures"
-
-local TEXT_SCALE = {x=0.8, y=0.5}
 
 -- Lots of overkill here. KISS advocates, go away, shoo! ;) -- kaeza
 
@@ -409,9 +409,11 @@ end
 
 local function set_obj_text(obj, text, new, pos)
 	local split = new and split_lines_and_words or split_lines_and_words_old
+	local n = minetest.registered_nodes[minetest.get_node(pos).name]
+	local text_scale = n.text_scale or DEFAULT_TEXT_SCALE
 	obj:set_properties({
 		textures={make_sign_texture(split(text), pos)},
-		visual_size = TEXT_SCALE,
+		visual_size = text_scale,
 	})
 end
 
