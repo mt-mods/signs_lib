@@ -572,7 +572,7 @@ function signs_lib.determine_sign_type(itemstack, placer, pointed_thing, locked)
 	local node=minetest.get_node(pointed_thing.under)
 
 	if minetest.registered_nodes[node.name] and minetest.registered_nodes[node.name].on_rightclick then
-		return minetest.registered_nodes[node.name].on_rightclick(pointed_thing.under, node, placer, itemstack)
+		return minetest.registered_nodes[node.name].on_rightclick(pointed_thing.under, node, placer, itemstack, pointed_thing)
 	else
 		local above = pointed_thing.above
 		local under = pointed_thing.under
@@ -943,7 +943,7 @@ function signs_lib.register_fence_with_sign(fencename, fencewithsignname)
 		end
 
 		if def_under and def_under.on_rightclick then
-			return def_under.on_rightclick(pointed_thing.under, node_under, placer, itemstack) or itemstack
+			return def_under.on_rightclick(pointed_thing.under, node_under, placer, itemstack, pointed_thing) or itemstack
 		elseif def_under and def_under.buildable_to then
 			minetest.add_node(pointed_thing.under, {name = fencename, param2 = fdir})
 			if not signs_lib.expect_infinite_stacks then
