@@ -1,0 +1,9 @@
+#Traducido por Carlos Barraza
+
+Reading cached character database. = Leyendo la base de datos de caracteres en caché.
+Font seems to have changed. Rebuilding cache. = La fuente parece haber cambiado. Reconstruyendo caché.
+Could not find font line height in cached DB. Trying brute force. = No se puede encontrar la fuente en la base de datos almacenada en el caché. Tratando fuerza bruta.
+Sign = Letrero
+%s wrote "%s" to sign at %s = %s escribio "%s" en el cartel en %s
+Registered %s and %s = Registrado %s y %s
+signs loaded = letreros cargados
