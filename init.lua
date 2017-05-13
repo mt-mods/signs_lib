@@ -13,7 +13,7 @@
 local enable_colored_metal_signs = true
 
 -- CWz's keyword interact mod uses this setting.
-local current_keyword = minetest.setting_get("interact_keyword") or "iaccept"
+local current_keyword = minetest.settings:get("interact_keyword") or "iaccept"
 
 signs_lib = {}
 screwdriver = screwdriver or {}
@@ -165,7 +165,7 @@ end
 
 -- infinite stacks
 
-if not minetest.setting_getbool("creative_mode") then
+if not minetest.settings:get_bool("creative_mode") then
 	signs_lib.expect_infinite_stacks = false
 else
 	signs_lib.expect_infinite_stacks = true
@@ -793,7 +793,7 @@ minetest.register_node(":locked_sign:sign_wall_locked", {
 		local meta = minetest.get_meta(pos)
 		local owner = meta:get_string("owner")
 		local pname = sender:get_player_name() or ""
-		if pname ~= owner and pname ~= minetest.setting_get("name")
+		if pname ~= owner and pname ~= minetest.settings:get("name")
 		  and not minetest.check_player_privs(pname, {sign_editor=true}) then
 			return
 		end
@@ -806,7 +806,7 @@ minetest.register_node(":locked_sign:sign_wall_locked", {
 		local meta = minetest.get_meta(pos)
 		local owner = meta:get_string("owner")
 		local pname = player:get_player_name()
-		return pname == owner or pname == minetest.setting_get("name")
+		return pname == owner or pname == minetest.settings:get("name")
 			or minetest.check_player_privs(pname, {sign_editor=true})
 	end,
 	on_rotate = signs_lib.wallmounted_rotate
@@ -1158,6 +1158,6 @@ if enable_colored_metal_signs then
 	})
 end
 
-if minetest.setting_get("log_mods") then
+if minetest.settings:get("log_mods") then
 	minetest.log("action", S("signs loaded"))
 end
