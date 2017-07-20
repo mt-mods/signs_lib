@@ -413,7 +413,7 @@ end
 local function set_obj_text(obj, text, new, pos)
 	local split = new and split_lines_and_words or split_lines_and_words_old
 	local n = minetest.registered_nodes[minetest.get_node(pos).name]
-	local text_scale = n.text_scale or DEFAULT_TEXT_SCALE
+	local text_scale = (n and n.text_scale) or DEFAULT_TEXT_SCALE
 	obj:set_properties({
 		textures={make_sign_texture(split(text), pos)},
 		visual_size = text_scale,
