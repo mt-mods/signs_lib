@@ -113,8 +113,9 @@ signs_lib.sign_post_model = {
 	}
 }
 
--- Boilerplate to support localized strings if intllib mod is installed.
-local S = rawget(_G, "intllib") and intllib.Getter() or function(s) return s end
+-- Load support for intllib.
+local MP = minetest.get_modpath(minetest.get_current_modname())
+local S, NS = dofile(MP.."/intllib.lua")
 signs_lib.gettext = S
 
 -- the list of standard sign nodes
@@ -473,7 +474,7 @@ signs_lib.update_sign = function(pos, fields, owner)
 			signs_lib.destruct_sign(pos)
 			meta:set_string("keyword", current_keyword)
 			local ownstr = ""
-			if owner then ownstr = "Locked sign, owned by "..owner.."\n" end
+			if owner then ownstr = S("Locked sign, owned by @1\n", owner) end
 			meta:set_string("infotext", ownstr..string.gsub(make_infotext(stored_text), "@KEYWORD", current_keyword).." ")
 		end
 	end
@@ -485,7 +486,7 @@ signs_lib.update_sign = function(pos, fields, owner)
 		fields.text = trim_input(fields.text)
 
 		local ownstr = ""
-		if owner then ownstr = "Locked sign, owned by "..owner.."\n" end
+		if owner then ownstr = S("Locked sign, owned by @1\n", owner) end
 
 		meta:set_string("infotext", ownstr..string.gsub(make_infotext(fields.text), "@KEYWORD", current_keyword).." ")
 		meta:set_string("text", fields.text)
@@ -631,11 +632,12 @@ function signs_lib.receive_fields(pos, formname, fields, sender, lock)
 			sender:get_player_name())
 		return
 	end
-	local lockstr = lock and "locked " or ""
+	local lockstr = lock and S("locked ") or ""
 	if fields and fields.text and fields.ok then
-		minetest.log("action", S("%s wrote \"%s\" to "..lockstr.."sign at %s"):format(
+		minetest.log("action", S("@1 wrote \"@2\" to @3sign at @4",
 			(sender:get_player_name() or ""),
 			fields.text,
+			lockstr,
 			minetest.pos_to_string(pos)
 		))
 		if lock then
@@ -766,10 +768,10 @@ minetest.register_node(":signs:sign_post", {
 
 -- Locked wall sign
 
-minetest.register_privilege("sign_editor", "Can edit all locked signs")
+minetest.register_privilege("sign_editor", S("Can edit all locked signs"))
 
 minetest.register_node(":locked_sign:sign_wall_locked", {
-	description = S("Sign"),
+	description = S("Locked Sign"),
 	inventory_image = "signs_locked_inv.png",
 	wield_image = "signs_locked_inv.png",
 	node_placement_prediction = "",
@@ -849,14 +851,23 @@ end
 
 -- metal, colored signs
 if enable_colored_metal_signs then
-	local sign_colors = { "green", "yellow", "red", "white_red", "white_black", "orange", "blue", "brown" }
-	local sign_default_text_colors = { "f", "0", "f", "4", "0", "0", "f", "f" }
+	-- array : color, translated color, default text color
+	local sign_colors = {
+		{"green",        S("green"),       "f"},
+		{"yellow",       S("yellow"),      "0"},
+		{"red",          S("red"),         "f"},
+		{"white_red",    S("white_red"),   "4"},
+		{"white_black",  S("white_black"), "0"},
+		{"orange",       S("orange"),      "0"},
+		{"blue",         S("blue"),        "f"},
+		{"brown",        S("brown"),       "f"},
+	}
 
 	for i, color in ipairs(sign_colors) do
-		minetest.register_node(":signs:sign_wall_"..color, {
-			description = S("Sign ("..color..", metal)"),
-			inventory_image = "signs_"..color.."_inv.png",
-			wield_image = "signs_"..color.."_inv.png",
+		minetest.register_node(":signs:sign_wall_"..color[1], {
+			description = S("Sign (@1, metal)", color[2]),
+			inventory_image = "signs_"..color[1].."_inv.png",
+			wield_image = "signs_"..color[1].."_inv.png",
 			node_placement_prediction = "",
 			paramtype = "light",
 			sunlight_propagates = true,
@@ -869,9 +880,9 @@ if enable_colored_metal_signs then
 				"signs_metal_sides.png",
 				"signs_metal_sides.png",
 				"signs_metal_back.png",
-				"signs_"..color.."_front.png"
+				"signs_"..color[1].."_front.png"
 			},
-			default_color = sign_default_text_colors[i],
+			default_color = color[3],
 			groups = sign_groups,
 			on_place = function(itemstack, placer, pointed_thing)
 				return signs_lib.determine_sign_type(itemstack, placer, pointed_thing)
@@ -919,7 +930,7 @@ function signs_lib.register_fence_with_sign(fencename, fencewithsignname)
     local def = minetest.registered_nodes[fencename]
     local def_sign = minetest.registered_nodes[fencewithsignname]
     if not (def and def_sign) then
-        minetest.log("warning", "[signs_lib] Attempt to register unknown node as fence")
+        minetest.log("warning", "[signs_lib] "..S("Attempt to register unknown node as fence"))
         return
     end
     def = signs_lib.table_copy(def)
@@ -982,7 +993,7 @@ function signs_lib.register_fence_with_sign(fencename, fencewithsignname)
 	minetest.register_node(":"..fencename, def)
 	minetest.register_node(":"..fencewithsignname, def_sign)
 	table.insert(signs_lib.sign_node_list, fencewithsignname)
-	minetest.log("verbose", S("Registered %s and %s"):format(fencename, fencewithsignname))
+	minetest.log("verbose", S("Registered @1 and @2", fencename, fencewithsignname))
 end
 
 build_char_db()
@@ -1159,5 +1170,5 @@ if enable_colored_metal_signs then
 end
 
 if minetest.settings:get("log_mods") then
-	minetest.log("action", S("signs loaded"))
+	minetest.log("action", S("[MOD] signs loaded"))
 end
