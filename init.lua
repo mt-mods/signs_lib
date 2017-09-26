@@ -1019,17 +1019,6 @@ minetest.register_lbm({
 -- locked sign
 
 minetest.register_craft({
-	output = "locked_sign:sign_wall_locked",
-	recipe = {
-		{"group:wood", "group:wood", "group:wood"},
-		{"group:wood", "group:wood", "default:steel_ingot"},
-		{"", "group:stick", ""},
-	}
-})
-
---Alternate recipe
-
-minetest.register_craft({
     	output = "locked_sign:sign_wall_locked",
     	recipe = {
         	{default_sign},
