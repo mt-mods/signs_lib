@@ -16,7 +16,15 @@ local enable_colored_metal_signs = true
 local current_keyword = minetest.settings:get("interact_keyword") or "iaccept"
 
 signs_lib = {}
+signs_lib.path = minetest.get_modpath(minetest.get_current_modname())
 screwdriver = screwdriver or {}
+
+-- Load support for intllib.
+local S, NS = dofile(signs_lib.path .. "/intllib.lua")
+signs_lib.gettext = S
+
+-- text encoding
+dofile(signs_lib.path .. "/encoding.lua");
 
 signs_lib.wallmounted_rotate = function(pos, node, user, mode, new_param2)
 	if mode ~= screwdriver.ROTATE_AXIS then return false end
@@ -113,11 +121,6 @@ signs_lib.sign_post_model = {
 	}
 }
 
--- Load support for intllib.
-local MP = minetest.get_modpath(minetest.get_current_modname())
-local S, NS = dofile(MP.."/intllib.lua")
-signs_lib.gettext = S
-
 -- the list of standard sign nodes
 
 signs_lib.sign_node_list = {
@@ -174,28 +177,48 @@ end
 
 -- CONSTANTS
 
-local MP = minetest.get_modpath("signs_lib")
-
--- Used by `build_char_db' to locate the file.
-local FONT_FMT = "%s/hdf_%02x.png"
-
--- Simple texture name for building text texture.
-local FONT_FMT_SIMPLE = "hdf_%02x.png"
-
 -- Path to the textures.
-local TP = MP.."/textures"
+local TP = signs_lib.path .. "/textures"
+-- Font file formatter
+local CHAR_FILE = "%s_%02x.png"
+-- Fonts path
+local CHAR_PATH = TP .. "/" .. CHAR_FILE
+
+-- Font name.
+local font_name = "hdf"
 
 -- Lots of overkill here. KISS advocates, go away, shoo! ;) -- kaeza
 
 local PNG_HDR = string.char(0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A)
 
+-- check if a file does exist
+-- to avoid reopening file after checking again
+-- pass TRUE as second argument
+function file_exists(name, return_handle, mode)
+	mode = mode or "r";
+	local f = io.open(name, mode)
+	if f ~= nil then
+		if (return_handle) then
+			return f
+		end
+		io.close(f) 
+		return true 
+	else 
+		return false 
+	end
+end
+
 -- Read the image size from a PNG file.
 -- Returns image_w, image_h.
 -- Only the LSB is read from each field!
 local function read_image_size(filename)
-	local f = io.open(filename, "rb")
+	local f = file_exists(filename, true, "rb")
+	-- file might not exist (don't crash the game)
+	if (not f) then
+		return 0, 0
+	end
 	f:seek("set", 0x0)
-	local hdr = f:read(8)
+	local hdr = f:read(string.len(PNG_HDR))
 	if hdr ~= PNG_HDR then
 		f:close()
 		return
@@ -243,8 +266,8 @@ local function build_char_db()
 	local total_width = 0
 	local char_count = 0
 
-	for c = 32, 126 do
-		local w, h = read_image_size(FONT_FMT:format(TP, c))
+	for c = 32, 255 do
+		local w, h = read_image_size(CHAR_PATH:format(font_name, c))
 		if w and h then
 			local ch = string.char(c)
 			charwidth[ch] = w
@@ -308,6 +331,19 @@ local function fill_line(x, y, w, c)
 	return table.concat(tex)
 end
 
+-- make char texture file name
+-- if texture file does not exist use fallback texture instead
+local function char_tex(font_name, ch)
+	local c = ch:byte()
+	local exists, tex = file_exists(CHAR_PATH:format(font_name, c))
+	if exists and c ~= 14 then
+		tex = CHAR_FILE:format(font_name, c)
+	else
+		tex = CHAR_FILE:format(font_name, 0x0)
+	end
+	return tex, exists
+end
+
 local function make_line_texture(line, lineno, pos)
 
 	local width = 0
@@ -344,9 +380,9 @@ local function make_line_texture(line, lineno, pos)
 					end
 					if #chars < MAX_INPUT_CHARS then
 						table.insert(chars, {
-							off=ch_offs,
-							tex=FONT_FMT_SIMPLE:format(c:byte()),
-							col=("%X"):format(cur_color),
+							off = ch_offs,
+							tex = char_tex(font_name, c),
+							col = ("%X"):format(cur_color),
 						})
 					end
 					ch_offs = ch_offs + w
@@ -387,7 +423,10 @@ local function make_line_texture(line, lineno, pos)
 			end
 			table.insert(texture, (":%d,%d=%s"):format(xpos + ch.off, ypos, ch.tex))
 		end
-		table.insert(texture, (":%d,%d=hdf_20.png"):format(xpos + word.w, ypos))
+		table.insert(
+			texture, 
+			(":%d,%d="):format(xpos + word.w, ypos) .. char_tex(font_name, " ")
+		)
 		xpos = xpos + word.w + charwidth[" "]
 		if xpos >= (SIGN_WIDTH + charwidth[" "]) then break end
 	end
@@ -413,10 +452,11 @@ end
 
 local function set_obj_text(obj, text, new, pos)
 	local split = new and split_lines_and_words or split_lines_and_words_old
+	local text_ansi = Utf8ToAnsi(text)
 	local n = minetest.registered_nodes[minetest.get_node(pos).name]
 	local text_scale = (n and n.text_scale) or DEFAULT_TEXT_SCALE
 	obj:set_properties({
-		textures={make_sign_texture(split(text), pos)},
+		textures={make_sign_texture(split(text_ansi), pos)},
 		visual_size = text_scale,
 	})
 end
@@ -636,7 +676,7 @@ function signs_lib.receive_fields(pos, formname, fields, sender, lock)
 	if fields and fields.text and fields.ok then
 		minetest.log("action", S("@1 wrote \"@2\" to @3sign at @4",
 			(sender:get_player_name() or ""),
-			fields.text,
+			fields.text:gsub('\\', '\\\\'):gsub("\n", "\\n"),
 			lockstr,
 			minetest.pos_to_string(pos)
 		))
