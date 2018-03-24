@@ -427,7 +427,7 @@ signs_lib.construct_sign = function(pos, locked)
 		"formspec",
 		"size[6,4]"..
 		"textarea[0,-0.3;6.5,3;text;;${text}]"..
-		"button_exit[2,3.4;2,1;ok;Write]"..
+		"button_exit[2,3.4;2,1;ok;"..S("Write").."]"..
 		"background[-0.5,-0.5;7,5;bg_signs_lib.jpg]")
 	meta:set_string("infotext", "")
 end
