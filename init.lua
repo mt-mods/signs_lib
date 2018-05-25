@@ -950,7 +950,7 @@ signs_text_on_activate = function(self)
 	local meta = minetest.get_meta(pos)
 	local text = meta:get_string("text")
 	local new = (meta:get_int("__signslib_new_format") ~= 0)
-	if text then
+	if text and minetest.registered_nodes[minetest.get_node(pos).name] then
 		text = trim_input(text)
 		set_obj_text(self.object, text, new, pos)
 	end
