@@ -567,9 +567,6 @@ signs_lib.update_sign = function(pos, fields, owner, node)
 	signs_lib.destruct_sign(pos)
 	local text = meta:get_string("text")
 	if text == nil or text == "" then return end
-
-if node then print ("---", node.name, node.param2) end
-
 	local sign_info
 	local signnode = node or minetest.get_node(pos)
 	local signname = signnode.name
