@@ -40,53 +40,31 @@ local wall_dir_change = {
 signs_lib.wallmounted_rotate = function(pos, node, user, mode)
 	if mode ~= screwdriver.ROTATE_FACE then return false end 
 	minetest.swap_node(pos, { name = node.name, param2 = wall_dir_change[node.param2 % 6] })
-	for _, v in ipairs(minetest.get_objects_inside_radius(pos, 0.5)) do
-		local e = v:get_luaentity()
-		if e and e.name == "signs:text" then
-			v:remove()
-		end
-	end
-	signs_lib.update_sign(pos)
+	signs_lib.update_sign(pos,nil,nil,node)
 	return true
 end
 
 signs_lib.facedir_rotate = function(pos, node, user, mode)
 	if mode ~= screwdriver.ROTATE_FACE then return false end
-	newparam2 = (node.param2 %8) + 1
+	local newparam2 = (node.param2 %8) + 1
 	if newparam2 == 5 then
 		newparam2 = 6
 	elseif newparam2 > 6 then
 		newparam2 = 0
 	end
 	minetest.swap_node(pos, { name = node.name, param2 = newparam2 })
-	for _, v in ipairs(minetest.get_objects_inside_radius(pos, 0.5)) do
-		local e = v:get_luaentity()
-		if e and e.name == "signs:text" then
-			v:remove()
-		end
-	end
-	signs_lib.update_sign(pos)
+	signs_lib.update_sign(pos,nil,nil,node)
 	return true
 end
 
 signs_lib.facedir_rotate_simple = function(pos, node, user, mode)
 	if mode ~= screwdriver.ROTATE_FACE then return false end
-	newparam2 = (node.param2 %8) + 1
+	local newparam2 = (node.param2 %8) + 1
 	if newparam2 > 3 then newparam2 = 0 end
 	minetest.swap_node(pos, { name = node.name, param2 = newparam2 })
-	for _, v in ipairs(minetest.get_objects_inside_radius(pos, 0.5)) do
-		local e = v:get_luaentity()
-		if e and e.name == "signs:text" then
-			v:remove()
-		end
-	end
-	signs_lib.update_sign(pos)
+	signs_lib.update_sign(pos,nil,nil,node)
 	return true
 end
-
-
-
-
 
 
 signs_lib.modpath = minetest.get_modpath("signs_lib")
@@ -206,15 +184,15 @@ default_sign_metal_image = "default_sign_steel.png"
 --table copy
 
 function signs_lib.table_copy(t)
-    local nt = { };
-    for k, v in pairs(t) do
-        if type(v) == "table" then
-            nt[k] = signs_lib.table_copy(v)
-        else
-            nt[k] = v
-        end
-    end
-    return nt
+	local nt = { }
+	for k, v in pairs(t) do
+		if type(v) == "table" then
+			nt[k] = signs_lib.table_copy(v)
+		else
+			nt[k] = v
+		end
+	end
+	return nt
 end
 
 -- infinite stacks
@@ -512,7 +490,7 @@ local function set_obj_text(obj, text, new, pos)
 end
 
 signs_lib.construct_sign = function(pos, locked)
-    local meta = minetest.get_meta(pos)
+	local meta = minetest.get_meta(pos)
 	meta:set_string(
 		"formspec",
 		"size[6,4]"..
@@ -523,13 +501,13 @@ signs_lib.construct_sign = function(pos, locked)
 end
 
 signs_lib.destruct_sign = function(pos)
-    local objects = minetest.get_objects_inside_radius(pos, 0.5)
-    for _, v in ipairs(objects) do
+	local objects = minetest.get_objects_inside_radius(pos, 0.5)
+	for _, v in ipairs(objects) do
 		local e = v:get_luaentity()
-        if e and e.name == "signs:text" then
-            v:remove()
-        end
-    end
+		if e and e.name == "signs:text" then
+			v:remove()
+		end
+	end
 end
 
 local function make_infotext(text)
@@ -542,7 +520,7 @@ local function make_infotext(text)
 	return table.concat(lines2, "\n")
 end
 
-signs_lib.update_sign = function(pos, fields, owner)
+signs_lib.update_sign = function(pos, fields, owner, node)
 
 	-- First, check if the interact keyword from CWz's mod is being set,
 	-- or has been changed since the last restart...
@@ -586,28 +564,11 @@ signs_lib.update_sign = function(pos, fields, owner)
 	else
 		new = (meta:get_int("__signslib_new_format") ~= 0)
 	end
+	signs_lib.destruct_sign(pos)
 	local text = meta:get_string("text")
-	if text == nil then return end
-	local objects = minetest.get_objects_inside_radius(pos, 0.5)
-	local found
-	for _, v in ipairs(objects) do
-		local e = v:get_luaentity()
-		if e and e.name == "signs:text" then
-			if found then
-				v:remove()
-			else
-				set_obj_text(v, text, new, pos)
-				found = true
-			end
-		end
-	end
-	if found then
-		return
-	end
-
-	-- if there is no entity
+	if text == nil or text == "" then return end
 	local sign_info
-	local signnode = minetest.get_node(pos)
+	local signnode = node or minetest.get_node(pos)
 	local signname = signnode.name
 	local textpos = minetest.registered_nodes[signname].textpos
 	if textpos then
@@ -764,52 +725,52 @@ minetest.register_node(":"..default_sign, {
 		signs_lib.receive_fields(pos, formname, fields, sender)
 	end,
 	on_punch = function(pos, node, puncher)
-		signs_lib.update_sign(pos)
+		signs_lib.update_sign(pos,nil,nil,node)
 	end,
 	on_rotate = signs_lib.wallmounted_rotate
 })
 
 minetest.register_node(":signs:sign_yard", {
-    paramtype = "light",
+	paramtype = "light",
 	sunlight_propagates = true,
-    paramtype2 = "facedir",
-    drawtype = "nodebox",
-    node_box = signs_lib.yard_sign_model.nodebox,
+	paramtype2 = "facedir",
+	drawtype = "nodebox",
+	node_box = signs_lib.yard_sign_model.nodebox,
 	selection_box = {
 		type = "fixed",
 		fixed = {-0.4375, -0.5, -0.0625, 0.4375, 0.375, 0}
 	},
-    tiles = {"signs_top.png", "signs_bottom.png", "signs_side.png", "signs_side.png", "signs_back.png", "signs_front.png"},
-    groups = {choppy=2, dig_immediate=2},
-    drop = default_sign,
+	tiles = {"signs_top.png", "signs_bottom.png", "signs_side.png", "signs_side.png", "signs_back.png", "signs_front.png"},
+	groups = {choppy=2, dig_immediate=2},
+	drop = default_sign,
 
-    on_construct = function(pos)
-        signs_lib.construct_sign(pos)
-    end,
-    on_destruct = function(pos)
-        signs_lib.destruct_sign(pos)
-    end,
+	on_construct = function(pos)
+		signs_lib.construct_sign(pos)
+	end,
+	on_destruct = function(pos)
+		signs_lib.destruct_sign(pos)
+	end,
 	on_receive_fields = function(pos, formname, fields, sender)
 		signs_lib.receive_fields(pos, formname, fields, sender)
 	end,
 	on_punch = function(pos, node, puncher)
-		signs_lib.update_sign(pos)
+		signs_lib.update_sign(pos,nil,nil,node)
 	end,
 	on_rotate = signs_lib.facedir_rotate_simple
 
 })
 
 minetest.register_node(":signs:sign_hanging", {
-    paramtype = "light",
+	paramtype = "light",
 	sunlight_propagates = true,
-    paramtype2 = "facedir",
-    drawtype = "nodebox",
-    node_box = signs_lib.hanging_sign_model.nodebox,
-    selection_box = {
+	paramtype2 = "facedir",
+	drawtype = "nodebox",
+	node_box = signs_lib.hanging_sign_model.nodebox,
+	selection_box = {
 		type = "fixed",
 		fixed = {-0.45, -0.275, -0.049, 0.45, 0.5, 0.049}
 	},
-    tiles = {
+	tiles = {
 		"signs_hanging_top.png",
 		"signs_hanging_bottom.png",
 		"signs_hanging_side.png",
@@ -817,31 +778,31 @@ minetest.register_node(":signs:sign_hanging", {
 		"signs_hanging_back.png",
 		"signs_hanging_front.png"
 	},
-    groups = {choppy=2, dig_immediate=2},
-    drop = default_sign,
+	groups = {choppy=2, dig_immediate=2},
+	drop = default_sign,
 
-    on_construct = function(pos)
-        signs_lib.construct_sign(pos)
-    end,
-    on_destruct = function(pos)
-        signs_lib.destruct_sign(pos)
-    end,
+	on_construct = function(pos)
+		signs_lib.construct_sign(pos)
+	end,
+	on_destruct = function(pos)
+		signs_lib.destruct_sign(pos)
+	end,
 	on_receive_fields = function(pos, formname, fields, sender)
 		signs_lib.receive_fields(pos, formname, fields, sender)
 	end,
 	on_punch = function(pos, node, puncher)
-		signs_lib.update_sign(pos)
+		signs_lib.update_sign(pos,nil,nil,node)
 	end,
 	on_rotate = signs_lib.facedir_rotate_simple
 })
 
 minetest.register_node(":signs:sign_post", {
-    paramtype = "light",
+	paramtype = "light",
 	sunlight_propagates = true,
-    paramtype2 = "facedir",
-    drawtype = "nodebox",
-    node_box = signs_lib.sign_post_model.nodebox,
-    tiles = {
+	paramtype2 = "facedir",
+	drawtype = "nodebox",
+	node_box = signs_lib.sign_post_model.nodebox,
+	tiles = {
 		"signs_post_top.png",
 		"signs_post_bottom.png",
 		"signs_post_side.png",
@@ -849,14 +810,14 @@ minetest.register_node(":signs:sign_post", {
 		"signs_post_back.png",
 		"signs_post_front.png",
 	},
-    groups = {choppy=2, dig_immediate=2},
-    drop = {
+	groups = {choppy=2, dig_immediate=2},
+	drop = {
 		max_items = 2,
 		items = {
 			{ items = { default_sign }},
 			{ items = { "default:fence_wood" }},
 		},
-    },
+	},
 	on_rotate = signs_lib.facedir_rotate_simple
 })
 
@@ -896,7 +857,7 @@ minetest.register_node(":locked_sign:sign_wall_locked", {
 		signs_lib.receive_fields(pos, formname, fields, sender, true)
 	end,
 	on_punch = function(pos, node, puncher)
-		signs_lib.update_sign(pos)
+		signs_lib.update_sign(pos,nil,nil,node)
 	end,
 	can_dig = function(pos, player)
 		local meta = minetest.get_meta(pos)
@@ -937,7 +898,7 @@ if minetest.registered_nodes["default:sign_wall_steel"] then
 			signs_lib.receive_fields(pos, formname, fields, sender)
 		end,
 		on_punch = function(pos, node, puncher)
-			signs_lib.update_sign(pos)
+			signs_lib.update_sign(pos,nil,nil,node)
 		end,
 		on_rotate = signs_lib.wallmounted_rotate
 	})
@@ -991,7 +952,7 @@ if enable_colored_metal_signs then
 				signs_lib.receive_fields(pos, formname, fields, sender)
 			end,
 			on_punch = function(pos, node, puncher)
-				signs_lib.update_sign(pos)
+				signs_lib.update_sign(pos,nil,nil,node)
 			end,
 			on_rotate = signs_lib.facedir_rotate
 		})
@@ -1012,9 +973,9 @@ signs_text_on_activate = function(self)
 end
 
 minetest.register_entity(":signs:text", {
-    collisionbox = { 0, 0, 0, 0, 0, 0 },
-    visual = "upright_sprite",
-    textures = {},
+	collisionbox = { 0, 0, 0, 0, 0, 0 },
+	visual = "upright_sprite",
+	textures = {},
 
 	on_activate = signs_text_on_activate,
 })
@@ -1022,17 +983,17 @@ minetest.register_entity(":signs:text", {
 -- And the good stuff here! :-)
 
 function signs_lib.register_fence_with_sign(fencename, fencewithsignname)
-    local def = minetest.registered_nodes[fencename]
-    local def_sign = minetest.registered_nodes[fencewithsignname]
-    if not (def and def_sign) then
-        minetest.log("warning", "[signs_lib] "..S("Attempt to register unknown node as fence"))
-        return
-    end
-    def = signs_lib.table_copy(def)
-    def_sign = signs_lib.table_copy(def_sign)
-    fences_with_sign[fencename] = fencewithsignname
+	local def = minetest.registered_nodes[fencename]
+	local def_sign = minetest.registered_nodes[fencewithsignname]
+	if not (def and def_sign) then
+		minetest.log("warning", "[signs_lib] "..S("Attempt to register unknown node as fence"))
+		return
+	end
+	def = signs_lib.table_copy(def)
+	def_sign = signs_lib.table_copy(def_sign)
+	fences_with_sign[fencename] = fencewithsignname
 
-    def_sign.on_place = function(itemstack, placer, pointed_thing, ...)
+	def_sign.on_place = function(itemstack, placer, pointed_thing, ...)
 		local node_above = minetest.get_node_or_nil(pointed_thing.above)
 		local node_under = minetest.get_node_or_nil(pointed_thing.under)
 		local def_above = node_above and minetest.registered_nodes[node_above.name]
@@ -1077,16 +1038,16 @@ function signs_lib.register_fence_with_sign(fencename, fencewithsignname)
 		signs_lib.receive_fields(pos, formname, fields, sender)
 	end
 	def_sign.on_punch = function(pos, node, puncher, ...)
-		signs_lib.update_sign(pos)
+		signs_lib.update_sign(pos,nil,nil,node)
 	end
 	local fencename = fencename
 	def_sign.after_dig_node = function(pos, node, ...)
-	    node.name = fencename
-	    minetest.add_node(pos, node)
+		node.name = fencename
+		minetest.add_node(pos, node)
 	end
 	def_sign.on_rotate = signs_lib.facedir_rotate_simple
 
-    def_sign.drop = default_sign
+	def_sign.drop = default_sign
 	minetest.register_node(":"..fencename, def)
 	minetest.register_node(":"..fencewithsignname, def_sign)
 	table.insert(signs_lib.sign_node_list, fencewithsignname)
@@ -1109,18 +1070,18 @@ minetest.register_lbm({
 	label = "Restore sign text",
 	run_at_every_load = true,
 	action = function(pos, node)
-		signs_lib.update_sign(pos)
+		signs_lib.update_sign(pos,nil,nil,node)
 	end
 })
 
 -- locked sign
 
 minetest.register_craft({
-    	output = "locked_sign:sign_wall_locked",
-    	recipe = {
-        	{default_sign},
-        	{"default:steel_ingot"},
-    },
+		output = "locked_sign:sign_wall_locked",
+		recipe = {
+			{default_sign},
+			{"default:steel_ingot"},
+	},
 })
 
 -- craft recipes for the metal signs
