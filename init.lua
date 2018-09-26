@@ -26,9 +26,20 @@ signs_lib.gettext = S
 -- text encoding
 dofile(signs_lib.path .. "/encoding.lua");
 
-signs_lib.wallmounted_rotate = function(pos, node, user, mode, new_param2)
-	if mode ~= screwdriver.ROTATE_AXIS then return false end
-	minetest.swap_node(pos, {name = node.name, param2 = (node.param2 + 1) % 6})
+
+local wall_dir_change = {
+	[0] = 4,
+	0,
+	5,
+	1,
+	2,
+	3,
+	0
+}
+
+signs_lib.wallmounted_rotate = function(pos, node, user, mode)
+	if mode ~= screwdriver.ROTATE_FACE then return false end 
+	minetest.swap_node(pos, { name = node.name, param2 = wall_dir_change[node.param2 % 6] })
 	for _, v in ipairs(minetest.get_objects_inside_radius(pos, 0.5)) do
 		local e = v:get_luaentity()
 		if e and e.name == "signs:text" then
@@ -38,6 +49,45 @@ signs_lib.wallmounted_rotate = function(pos, node, user, mode, new_param2)
 	signs_lib.update_sign(pos)
 	return true
 end
+
+signs_lib.facedir_rotate = function(pos, node, user, mode)
+	if mode ~= screwdriver.ROTATE_FACE then return false end
+	newparam2 = (node.param2 %8) + 1
+	if newparam2 == 5 then
+		newparam2 = 6
+	elseif newparam2 > 6 then
+		newparam2 = 0
+	end
+	minetest.swap_node(pos, { name = node.name, param2 = newparam2 })
+	for _, v in ipairs(minetest.get_objects_inside_radius(pos, 0.5)) do
+		local e = v:get_luaentity()
+		if e and e.name == "signs:text" then
+			v:remove()
+		end
+	end
+	signs_lib.update_sign(pos)
+	return true
+end
+
+signs_lib.facedir_rotate_simple = function(pos, node, user, mode)
+	if mode ~= screwdriver.ROTATE_FACE then return false end
+	newparam2 = (node.param2 %8) + 1
+	if newparam2 > 3 then newparam2 = 0 end
+	minetest.swap_node(pos, { name = node.name, param2 = newparam2 })
+	for _, v in ipairs(minetest.get_objects_inside_radius(pos, 0.5)) do
+		local e = v:get_luaentity()
+		if e and e.name == "signs:text" then
+			v:remove()
+		end
+	end
+	signs_lib.update_sign(pos)
+	return true
+end
+
+
+
+
+
 
 signs_lib.modpath = minetest.get_modpath("signs_lib")
 
@@ -745,6 +795,8 @@ minetest.register_node(":signs:sign_yard", {
 	on_punch = function(pos, node, puncher)
 		signs_lib.update_sign(pos)
 	end,
+	on_rotate = signs_lib.facedir_rotate_simple
+
 })
 
 minetest.register_node(":signs:sign_hanging", {
@@ -780,6 +832,7 @@ minetest.register_node(":signs:sign_hanging", {
 	on_punch = function(pos, node, puncher)
 		signs_lib.update_sign(pos)
 	end,
+	on_rotate = signs_lib.facedir_rotate_simple
 })
 
 minetest.register_node(":signs:sign_post", {
@@ -804,6 +857,7 @@ minetest.register_node(":signs:sign_post", {
 			{ items = { "default:fence_wood" }},
 		},
     },
+	on_rotate = signs_lib.facedir_rotate_simple
 })
 
 -- Locked wall sign
@@ -939,6 +993,7 @@ if enable_colored_metal_signs then
 			on_punch = function(pos, node, puncher)
 				signs_lib.update_sign(pos)
 			end,
+			on_rotate = signs_lib.facedir_rotate
 		})
 	end
 end
@@ -1029,6 +1084,8 @@ function signs_lib.register_fence_with_sign(fencename, fencewithsignname)
 	    node.name = fencename
 	    minetest.add_node(pos, node)
 	end
+	def_sign.on_rotate = signs_lib.facedir_rotate_simple
+
     def_sign.drop = default_sign
 	minetest.register_node(":"..fencename, def)
 	minetest.register_node(":"..fencewithsignname, def_sign)
