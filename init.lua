@@ -387,6 +387,24 @@ local function make_line_texture(line, lineno, pos)
 	for word_i, word in ipairs(line) do
 		local chars = { }
 		local ch_offs = 0
+		word = string.gsub(word, "%^[12345678abcdefgh]", {
+			["^1"] = string.char(0x81),
+			["^2"] = string.char(0x82),
+			["^3"] = string.char(0x83),
+			["^4"] = string.char(0x84),
+			["^5"] = string.char(0x85),
+			["^6"] = string.char(0x86),
+			["^7"] = string.char(0x87),
+			["^8"] = string.char(0x88),
+			["^a"] = string.char(0x8a),
+			["^b"] = string.char(0x8b),
+			["^c"] = string.char(0x8c),
+			["^d"] = string.char(0x8d),
+			["^e"] = string.char(0x8e),
+			["^f"] = string.char(0x8f),
+			["^g"] = string.char(0x90),
+			["^h"] = string.char(0x91)
+		})
 		local word_l = #word
 		local i = 1
 		while i <= word_l  do
