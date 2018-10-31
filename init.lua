@@ -1098,7 +1098,7 @@ minetest.register_craft({
 		output = "locked_sign:sign_wall_locked",
 		recipe = {
 			{default_sign},
-			{"default:steel_ingot"},
+			{"basic_materials:padlock"},
 	},
 })
 
