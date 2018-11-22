@@ -26,6 +26,9 @@ signs_lib.gettext = S
 -- text encoding
 dofile(signs_lib.path .. "/encoding.lua");
 
+-- Initialize character texture cache
+local ctexcache = {}
+
 
 local wall_dir_change = {
 	[0] = 4,
@@ -362,14 +365,19 @@ end
 -- make char texture file name
 -- if texture file does not exist use fallback texture instead
 local function char_tex(font_name, ch)
-	local c = ch:byte()
-	local exists, tex = file_exists(CHAR_PATH:format(font_name, c))
-	if exists and c ~= 14 then
-		tex = CHAR_FILE:format(font_name, c)
+	if ctexcache[font_name..ch] then
+		return ctexcache[font_name..ch], true
 	else
-		tex = CHAR_FILE:format(font_name, 0x0)
+		local c = ch:byte()
+		local exists, tex = file_exists(CHAR_PATH:format(font_name, c))
+		if exists and c ~= 14 then
+			tex = CHAR_FILE:format(font_name, c)
+		else
+			tex = CHAR_FILE:format(font_name, 0x0)
+		end
+		ctexcache[font_name..ch] = tex
+		return tex, exists
 	end
-	return tex, exists
 end
 
 local function make_line_texture(line, lineno, pos)
