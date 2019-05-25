@@ -41,6 +41,11 @@ local wall_dir_change = {
 }
 
 signs_lib.wallmounted_rotate = function(pos, node, user, mode)
+	if minetest.is_protected(pos, user:get_player_name()) then
+		minetest.record_protection_violation(pos,
+		sender:get_player_name())
+		return false
+	end
 	if mode ~= screwdriver.ROTATE_FACE then return false end 
 	minetest.swap_node(pos, { name = node.name, param2 = wall_dir_change[node.param2 % 6] })
 	signs_lib.update_sign(pos,nil,nil,node)
@@ -48,6 +53,11 @@ signs_lib.wallmounted_rotate = function(pos, node, user, mode)
 end
 
 signs_lib.facedir_rotate = function(pos, node, user, mode)
+	if minetest.is_protected(pos, user:get_player_name()) then
+		minetest.record_protection_violation(pos,
+		sender:get_player_name())
+		return false
+	end
 	if mode ~= screwdriver.ROTATE_FACE then return false end
 	local newparam2 = (node.param2 %8) + 1
 	if newparam2 == 5 then
@@ -61,6 +71,11 @@ signs_lib.facedir_rotate = function(pos, node, user, mode)
 end
 
 signs_lib.facedir_rotate_simple = function(pos, node, user, mode)
+	if minetest.is_protected(pos, user:get_player_name()) then
+		minetest.record_protection_violation(pos,
+		sender:get_player_name())
+		return false
+	end
 	if mode ~= screwdriver.ROTATE_FACE then return false end
 	local newparam2 = (node.param2 %8) + 1
 	if newparam2 > 3 then newparam2 = 0 end
@@ -892,7 +907,15 @@ minetest.register_node(":locked_sign:sign_wall_locked", {
 		return pname == owner or pname == minetest.settings:get("name")
 			or minetest.check_player_privs(pname, {sign_editor=true})
 	end,
-	on_rotate = signs_lib.wallmounted_rotate
+	on_rotate = function(pos, node, user, mode)
+		local meta = minetest.get_meta(pos)
+		local owner = meta:get_string("owner")
+		if owner == user:get_player_name() then
+			signs_lib.wallmounted_rotate(pos, node, user, mode)
+		else
+			return false
+		end
+	end
 })
 
 -- default metal sign, if defined
