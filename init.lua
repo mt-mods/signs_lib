@@ -920,38 +920,52 @@ minetest.register_node(":locked_sign:sign_wall_locked", {
 
 -- default metal sign, if defined
 
-if minetest.registered_nodes["default:sign_wall_steel"] then
-	minetest.register_node(":"..default_sign_metal, {
-		description = S("Sign"),
-		inventory_image = default_sign_metal_image,
-		wield_image = default_sign_metal_image,
-		node_placement_prediction = "",
-		sunlight_propagates = true,
-		paramtype = "light",
-		paramtype2 = "wallmounted",
-		drawtype = "nodebox",
-		node_box = signs_lib.regular_wall_sign_model.nodebox,
-		tiles = {"signs_wall_sign_metal.png"},
-		groups = sign_groups,
+minetest.register_node(":"..default_sign_metal, {
+	description = S("Sign"),
+	inventory_image = default_sign_metal_image,
+	wield_image = default_sign_metal_image,
+	node_placement_prediction = "",
+	sunlight_propagates = true,
+	paramtype = "light",
+	paramtype2 = "wallmounted",
+	drawtype = "nodebox",
+	node_box = signs_lib.regular_wall_sign_model.nodebox,
+	tiles = {"signs_wall_sign_metal.png"},
+	groups = sign_groups,
 
-		on_place = function(itemstack, placer, pointed_thing)
-			return signs_lib.determine_sign_type(itemstack, placer, pointed_thing)
-		end,
-		on_construct = function(pos)
-			signs_lib.construct_sign(pos)
-		end,
-		on_destruct = function(pos)
-			signs_lib.destruct_sign(pos)
-		end,
-		on_receive_fields = function(pos, formname, fields, sender)
-			signs_lib.receive_fields(pos, formname, fields, sender)
-		end,
-		on_punch = function(pos, node, puncher)
-			signs_lib.update_sign(pos,nil,nil,node)
-		end,
-		on_rotate = signs_lib.wallmounted_rotate
-	})
-end
+	on_place = function(itemstack, placer, pointed_thing)
+		return signs_lib.determine_sign_type(itemstack, placer, pointed_thing)
+	end,
+	on_construct = function(pos)
+		signs_lib.construct_sign(pos)
+	end,
+	on_destruct = function(pos)
+		signs_lib.destruct_sign(pos)
+	end,
+	on_receive_fields = function(pos, formname, fields, sender)
+		local meta = minetest.get_meta(pos)
+		local owner = meta:get_string("owner")
+		local pname = sender:get_player_name() or ""
+		if pname ~= owner and pname ~= minetest.settings:get("name")
+		  and not minetest.check_player_privs(pname, {sign_editor=true}) then
+			return
+		end
+		signs_lib.receive_fields(pos, formname, fields, sender, true)
+	end,
+	on_punch = function(pos, node, puncher)
+		signs_lib.update_sign(pos,nil,nil,node)
+	end,
+	on_rotate = function(pos, node, user, mode)
+		local meta = minetest.get_meta(pos)
+		local owner = meta:get_string("owner")
+		if owner == user:get_player_name() then
+			signs_lib.wallmounted_rotate(pos, node, user, mode)
+		else
+			return false
+		end
+	end
+})
+
 
 -- metal, colored signs
 if enable_colored_metal_signs then
