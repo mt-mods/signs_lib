@@ -169,9 +169,15 @@ signs_lib.sign_post_model = {
 
 -- the list of standard sign nodes
 
+local default_sign = "default:sign_wall_wood"
+local default_sign_image = "default_sign_wood.png"
+
+local default_sign_metal = "default:sign_wall_steel"
+local default_sign_metal_image = "default_sign_steel.png"
+
 signs_lib.sign_node_list = {
-	"default:sign_wall_wood",
-	"default:sign_wall_steel",
+	default_sign,
+	default_sign_metal,
 	"signs:sign_yard",
 	"signs:sign_hanging",
 	"signs:sign_wall_green",
@@ -184,20 +190,6 @@ signs_lib.sign_node_list = {
 	"signs:sign_wall_brown",
 	"locked_sign:sign_wall_locked"
 }
-
-local default_sign, default_sign_image
-
--- Default sign was renamed in 0.4.14. Support both & old versions.
-if minetest.registered_nodes["default:sign_wall_wood"] then
-	default_sign = "default:sign_wall_wood"
-	default_sign_image = "default_sign_wood.png"
-else
-	default_sign = "default:sign_wall"
-	default_sign_image = "default_sign_wall.png"
-end
-
-default_sign_metal = "default:sign_wall_steel"
-default_sign_metal_image = "default_sign_steel.png"
 
 --table copy
 
@@ -685,6 +677,7 @@ function signs_lib.determine_sign_type(itemstack, placer, pointed_thing, locked)
 				z = above.z - placer_pos.z
 			}
 		end
+		local finalpos = above
 
 		local fdir = minetest.dir_to_facedir(dir)
 		local pt_name = minetest.get_node(under).name
@@ -692,23 +685,23 @@ function signs_lib.determine_sign_type(itemstack, placer, pointed_thing, locked)
 
 		if fences_with_sign[pt_name] and signname == default_sign then
 			minetest.add_node(under, {name = fences_with_sign[pt_name], param2 = fdir})
+			finalpos = under
 		elseif wdir == 0 and signname == default_sign then
 			minetest.add_node(above, {name = "signs:sign_hanging", param2 = fdir})
 		elseif wdir == 1 and signname == default_sign then
 			minetest.add_node(above, {name = "signs:sign_yard", param2 = fdir})
-		elseif signname == default_sign_metal then
+		elseif signname == default_sign
+		  or signname == default_sign_metal
+		  or signname == "locked_sign:sign_wall_locked" then
 			minetest.add_node(above, {name = signname, param2 = wdir })
-		elseif signname ~= default_sign
-		  and signname ~= default_sign_metal
-		  and signname ~= "locked_sign:sign_wall_locked" then -- it's a signs_lib colored metal wall sign.
-			minetest.add_node(above, {name = signname, param2 = fdir})
-		else -- it must be a default or locked wooden wall sign
-			minetest.add_node(above, {name = signname, param2 = wdir }) -- note it's wallmounted here!
-			if locked then
-				local meta = minetest.get_meta(above)
-				local owner = placer:get_player_name()
-				meta:set_string("owner", owner)
-			end
+		else
+			minetest.add_node(above, {name = signname, param2 = fdir}) -- it must be a colored metal sign
+		end
+
+		if locked then
+			local meta = minetest.get_meta(finalpos)
+			local owner = placer:get_player_name()
+			meta:set_string("owner", owner)
 		end
 
 		if not signs_lib.expect_infinite_stacks then
@@ -918,7 +911,7 @@ minetest.register_node(":locked_sign:sign_wall_locked", {
 	end
 })
 
--- default metal sign, if defined
+-- default metal sign
 
 minetest.register_node(":"..default_sign_metal, {
 	description = S("Sign"),
@@ -932,12 +925,11 @@ minetest.register_node(":"..default_sign_metal, {
 	node_box = signs_lib.regular_wall_sign_model.nodebox,
 	tiles = {"signs_wall_sign_metal.png"},
 	groups = sign_groups,
-
 	on_place = function(itemstack, placer, pointed_thing)
-		return signs_lib.determine_sign_type(itemstack, placer, pointed_thing)
+		return signs_lib.determine_sign_type(itemstack, placer, pointed_thing, true)
 	end,
 	on_construct = function(pos)
-		signs_lib.construct_sign(pos)
+		signs_lib.construct_sign(pos, true)
 	end,
 	on_destruct = function(pos)
 		signs_lib.destruct_sign(pos)
@@ -955,6 +947,13 @@ minetest.register_node(":"..default_sign_metal, {
 	on_punch = function(pos, node, puncher)
 		signs_lib.update_sign(pos,nil,nil,node)
 	end,
+	can_dig = function(pos, player)
+		local meta = minetest.get_meta(pos)
+		local owner = meta:get_string("owner")
+		local pname = player:get_player_name()
+		return pname == owner or pname == minetest.settings:get("name")
+			or minetest.check_player_privs(pname, {sign_editor=true})
+	end,
 	on_rotate = function(pos, node, user, mode)
 		local meta = minetest.get_meta(pos)
 		local owner = meta:get_string("owner")
@@ -965,7 +964,6 @@ minetest.register_node(":"..default_sign_metal, {
 		end
 	end
 })
-
 
 -- metal, colored signs
 if enable_colored_metal_signs then
