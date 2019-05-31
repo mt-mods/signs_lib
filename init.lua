@@ -1109,7 +1109,6 @@ function signs_lib.register_fence_with_sign(fencename, fencewithsignname)
 	def_sign.on_rotate = signs_lib.facedir_rotate_simple
 
 	def_sign.drop = default_sign
-	minetest.register_node(":"..fencename, def)
 	minetest.register_node(":"..fencewithsignname, def_sign)
 	table.insert(signs_lib.sign_node_list, fencewithsignname)
 	minetest.log("verbose", S("Registered @1 and @2", fencename, fencewithsignname))
