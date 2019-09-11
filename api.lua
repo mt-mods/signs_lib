@@ -66,7 +66,11 @@ signs_lib.wall_fdir_to_back = {
 local ctexcache = {}
 
 signs_lib.wallmounted_rotate = function(pos, node, user, mode)
-	if mode ~= screwdriver.ROTATE_FACE then return false end
+	if not signs_lib.can_modify(pos, user) then return false end
+
+	if mode ~= screwdriver.ROTATE_FACE or string.match(node.name, "_onpole") then
+		return false
+	end
 	minetest.swap_node(pos, { name = node.name, param2 = wall_dir_change[node.param2 % 6] })
 	for _, v in ipairs(minetest.get_objects_inside_radius(pos, 0.5)) do
 		local e = v:get_luaentity()
@@ -79,8 +83,15 @@ signs_lib.wallmounted_rotate = function(pos, node, user, mode)
 end
 
 signs_lib.facedir_rotate = function(pos, node, user, mode)
-	if mode ~= screwdriver.ROTATE_FACE or not signs_lib.can_modify(pos, user) then return end
-	newparam2 = ((node.param2 % 6 ) == 0) and 1 or 0
+	if not signs_lib.can_modify(pos, user) then return false end
+
+	if mode ~= screwdriver.ROTATE_FACE or string.match(node.name, "_onpole") then
+		return false
+	end
+
+	local newparam2 = node.param2 + 1
+	if newparam2 > 3 then newparam2 = 0 end
+
 	minetest.swap_node(pos, { name = node.name, param2 = newparam2 })
 	for _, v in ipairs(minetest.get_objects_inside_radius(pos, 0.5)) do
 		local e = v:get_luaentity()
