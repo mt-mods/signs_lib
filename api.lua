@@ -37,15 +37,6 @@ signs_lib.wallmounted_yaw = {
 	math.pi,
 }
 
-local wall_dir_change = {
-	[0] = 2,
-	2,
-	5,
-	4,
-	2,
-	3,
-}
-
 signs_lib.fdir_to_back = {
 	{  0, -1 },
 	{ -1,  0 },
@@ -62,6 +53,25 @@ signs_lib.wall_fdir_to_back = {
 	{  1,  0 },
 }
 
+signs_lib.rotate_facedir = {
+	[0] = 1,
+	[1] = 6,
+	[2] = 3,
+	[3] = 0,
+	[4] = 2,
+	[5] = 6,
+	[6] = 4
+}
+
+signs_lib.rotate_walldir = {
+	[0] = 1,
+	[1] = 5,
+	[2] = 0,
+	[3] = 4,
+	[4] = 2,
+	[5] = 3
+}
+
 -- Initialize character texture cache
 local ctexcache = {}
 
@@ -71,7 +81,10 @@ signs_lib.wallmounted_rotate = function(pos, node, user, mode)
 	if mode ~= screwdriver.ROTATE_FACE or string.match(node.name, "_onpole") then
 		return false
 	end
-	minetest.swap_node(pos, { name = node.name, param2 = wall_dir_change[node.param2 % 6] })
+
+	local newparam2 = signs_lib.rotate_walldir[node.param2] or 0
+
+	minetest.swap_node(pos, { name = node.name, param2 = newparam2 })
 	for _, v in ipairs(minetest.get_objects_inside_radius(pos, 0.5)) do
 		local e = v:get_luaentity()
 		if e and e.name == "signs_lib:text" then
@@ -89,8 +102,7 @@ signs_lib.facedir_rotate = function(pos, node, user, mode)
 		return false
 	end
 
-	local newparam2 = node.param2 + 1
-	if newparam2 > 3 then newparam2 = 0 end
+	local newparam2 = signs_lib.rotate_facedir[node.param2] or 0
 
 	minetest.swap_node(pos, { name = node.name, param2 = newparam2 })
 	for _, v in ipairs(minetest.get_objects_inside_radius(pos, 0.5)) do
