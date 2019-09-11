@@ -572,7 +572,7 @@ function signs_lib.make_selection_boxes(sizex, sizey, onpole, xoffs, yoffs, zoff
 		if not fdir then
 			return {
 				type = "wallmounted",
-				wall_side =   { -0.5, -ty, -tx, -0.4375, ty, tx },
+				wall_side =   { -0.5 + zo, -ty + yo, -tx + xo, -0.4375 + zo, ty + yo, tx + xo },
 				wall_top =    { -tx - xo, 0.5 + zo, -ty + yo, tx - xo, 0.4375 + zo, ty + yo},
 				wall_bottom = { -tx - xo, -0.5 + zo, -ty + yo, tx - xo, -0.4375 + zo, ty + yo }
 			}
