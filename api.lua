@@ -579,13 +579,20 @@ function signs_lib.check_for_pole(pos, pointed_thing)
 	local pnode = minetest.get_node(ppos)
 	local pdef = minetest.registered_items[pnode.name]
 
-	if signs_lib.allowed_poles[pnode.name]
+	print(dump(pos))
+	print(dump(ppos))
+
+	if (signs_lib.allowed_poles[pnode.name]
 		  or (pdef and pdef.drawtype == "fencelike")
 		  or string.find(pnode.name, "default:fence_")
 		  or string.find(pnode.name, "_post")
 		  or string.find(pnode.name, "fencepost")
 		  or (pnode.name == "streets:bigpole" and pnode.param2 < 4)
-		  or (pnode.name == "streets:bigpole" and pnode.param2 > 19 and pnode.param2 < 24) then
+		  or (pnode.name == "streets:bigpole" and pnode.param2 > 19 and pnode.param2 < 24)
+		)
+	  and
+		(pos.x ~= ppos.x or pos.z ~= ppos.z) then
+		print("signs_lib.check_for_pole returned true")
 		return true
 	end
 end
