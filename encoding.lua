@@ -1,4 +1,4 @@
--- encoding borrowed from signs_lib mod of https://github.com/lord-server/lord
+-- encoding borrowed from signs_lib fork at https://github.com/lord-server/lord
 
 local ansi_decode = {
 	[128] = "\208\130",
