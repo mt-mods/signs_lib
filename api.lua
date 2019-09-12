@@ -10,13 +10,13 @@ signs_lib.allowed_poles = {}
 
 -- Settings used for a standard wood or steel wall sign
 signs_lib.standard_lines = 6
-signs_lib.standard_hscale = 1.7
-signs_lib.standard_vscale = 1.75
+signs_lib.standard_hscale = 1
+signs_lib.standard_vscale = 1
 signs_lib.standard_lspace = 1
 signs_lib.standard_fsize = 15
-signs_lib.standard_xoffs = 5
-signs_lib.standard_yoffs = 38
-signs_lib.standard_cpl = 25
+signs_lib.standard_xoffs = 4
+signs_lib.standard_yoffs = 2
+signs_lib.standard_cpl = 35
 
 signs_lib.standard_wood_groups =  {choppy = 2, flammable = 2, oddly_breakable_by_hand = 3}
 signs_lib.standard_steel_groups = {cracky = 2, oddly_breakable_by_hand = 3} 
@@ -550,7 +550,7 @@ end
 minetest.register_entity("signs_lib:text", {
 	collisionbox = { 0, 0, 0, 0, 0, 0 },
 	visual = "mesh",
-	mesh = "signs_lib_basic_entity.obj",
+	mesh = "signs_lib_standard_wall_sign_entity.obj",
 	textures = {},
 	on_activate = signs_text_on_activate,
 })
