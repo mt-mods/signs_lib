@@ -434,7 +434,10 @@ signs_lib.construct_sign = function(pos)
 		"textarea[0,-0.3;6.5,3;text;;${text}]"..
 		"button_exit[2,3.4;2,1;ok;"..S("Write").."]"..
 		"background[-0.5,-0.5;7,5;signs_lib_sign_bg.jpg]")
-	meta:set_string("infotext", "")
+	local i = meta:get_string("infotext")
+	if i == "" then -- it wasn't even set, so set it.
+		meta:set_string("infotext", "")
+	end
 end
 
 function signs_lib.destruct_sign(pos)

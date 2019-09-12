@@ -37,6 +37,7 @@ for _, onpole in ipairs({"", "_onpole"}) do
 		wield_image = "signs_lib_sign_wall_wooden_inv.png",
 		groups = wood_groups,
 		default_color = "0",
+		on_rightclick = signs_lib.construct_sign,
 		on_construct = signs_lib.construct_sign,
 		on_destruct = signs_lib.destruct_sign,
 		on_receive_fields = signs_lib.receive_fields,
@@ -76,6 +77,7 @@ for _, onpole in ipairs({"", "_onpole"}) do
 		wield_image = "signs_lib_sign_wall_steel_inv.png",
 		groups = wood_groups,
 		default_color = "0",
+		on_rightclick = signs_lib.construct_sign,
 		on_construct = signs_lib.construct_sign,
 		on_destruct = signs_lib.destruct_sign,
 		after_place_node = function(pos, placer, itemstack, pointed_thing)
