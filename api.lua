@@ -716,7 +716,7 @@ minetest.register_lbm({
 
 minetest.register_chatcommand("regen_signs", {
 	params = "",
-	privs = {sign_editor = true},
+	privs = {server = true},
 	description = "Skims through all currently-loaded sign-bearing mapblocks, clears away any entities within each sign's node space, and regenerates their text entities, if any.",
 	func = function(player_name, params)
 		local allsigns = {}
