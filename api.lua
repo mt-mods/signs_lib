@@ -18,8 +18,8 @@ signs_lib.standard_xoffs = 4
 signs_lib.standard_yoffs = 2
 signs_lib.standard_cpl = 35
 
-signs_lib.standard_wood_groups =  {choppy = 2, flammable = 2, oddly_breakable_by_hand = 3}
-signs_lib.standard_steel_groups = {cracky = 2, oddly_breakable_by_hand = 3} 
+signs_lib.standard_wood_groups =  {sign = 1, choppy = 2, flammable = 2, oddly_breakable_by_hand = 3}
+signs_lib.standard_steel_groups = {sign = 1, cracky = 2, oddly_breakable_by_hand = 3} 
 
 signs_lib.standard_yaw = {
 	0,
@@ -692,5 +692,73 @@ minetest.register_lbm({
 			newmeta:from_table(oldmeta)
 			signs_lib.update_sign(signpos)
 		end
+	end
+})
+
+signs_lib.block_list = {}
+signs_lib.totalblocks = 0
+
+-- Maintain a list of currently-loaded blocks
+minetest.register_lbm({
+	nodenames = {"group:sign"},
+	name = "signs_lib:update_block_list",
+	label = "Update list of loaded blocks, log only those with signs",
+	run_at_every_load = true,
+	action = function(pos, node)
+		-- yeah, yeah... I know I'm hashing a block pos, but it's still just a set of coords
+		local hash = minetest.hash_node_position(vector.floor(vector.divide(pos, core.MAP_BLOCKSIZE)))
+		if not signs_lib.block_list[hash] then
+			signs_lib.block_list[hash] = true
+			signs_lib.totalblocks = signs_lib.totalblocks + 1
+		end
+	end
+})
+
+minetest.register_chatcommand("regen_signs", {
+	params = "",
+	privs = {sign_editor = true},
+	description = "Skims through all currently-loaded sign-bearing mapblocks, clears away any entities within each sign's node space, and regenerates their text entities, if any.",
+	func = function(player_name, params)
+		local allsigns = {}
+		local totalsigns = 0
+		for b in pairs(signs_lib.block_list) do
+			local blockpos = minetest.get_position_from_hash(b)
+			local pos1 = vector.multiply(blockpos, core.MAP_BLOCKSIZE)
+			local pos2 = vector.add(pos1, core.MAP_BLOCKSIZE - 1)
+			if minetest.get_node_or_nil(vector.add(pos1, core.MAP_BLOCKSIZE/2)) then
+				local signs_in_block = minetest.find_nodes_in_area(pos1, pos2, {"group:sign"})
+				allsigns[#allsigns + 1] = signs_in_block
+				totalsigns = totalsigns + #signs_in_block
+			else
+				signs_lib.block_list[b] = nil -- if the block is no longer loaded, remove it from the table
+				signs_lib.totalblocks = signs_lib.totalblocks - 1
+			end
+		end
+		if signs_lib.totalblocks < 0 then signs_lib.totalblocks = 0 end
+		if totalsigns == 0 then
+			minetest.chat_send_player(player_name, "There are no signs in the currently-loaded terrain.")
+			signs_lib.block_list = {}
+			return
+		end
+
+		minetest.chat_send_player(player_name, "Found a total of "..totalsigns.." sign nodes across "..signs_lib.totalblocks.." blocks.")
+		minetest.chat_send_player(player_name, "Regenerating sign entities...")
+
+		for _, b in pairs(allsigns) do
+			for _, pos in ipairs(b) do
+				local objects = minetest.get_objects_inside_radius(pos, 0.5)
+				if #objects > 0 then
+					for _, v in ipairs(objects) do
+						v:remove()
+					end
+				end
+				local node = minetest.get_node(pos)
+				local def = minetest.registered_items[node.name]
+				if def and def.entity_info then
+					signs_lib.update_sign(pos)
+				end
+			end
+		end
+		minetest.chat_send_player(player_name, "Finished.")
 	end
 })
