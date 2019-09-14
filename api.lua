@@ -18,8 +18,11 @@ signs_lib.standard_xoffs = 4
 signs_lib.standard_yoffs = 2
 signs_lib.standard_cpl = 35
 
-signs_lib.standard_wood_groups =  {sign = 1, choppy = 2, flammable = 2, oddly_breakable_by_hand = 3}
-signs_lib.standard_steel_groups = {sign = 1, cracky = 2, oddly_breakable_by_hand = 3} 
+signs_lib.standard_wood_groups = table.copy(minetest.registered_items["default:sign_wall_wood"].groups)
+signs_lib.standard_wood_groups.sign = 1
+
+signs_lib.standard_steel_groups = table.copy(minetest.registered_items["default:sign_wall_steel"].groups)
+signs_lib.standard_steel_groups.sign = 1
 
 signs_lib.standard_yaw = {
 	0,
