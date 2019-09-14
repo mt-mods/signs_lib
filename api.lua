@@ -24,6 +24,9 @@ signs_lib.standard_wood_groups.sign = 1
 signs_lib.standard_steel_groups = table.copy(minetest.registered_items["default:sign_wall_steel"].groups)
 signs_lib.standard_steel_groups.sign = 1
 
+signs_lib.standard_wood_sign_sounds  = table.copy(minetest.registered_items["default:sign_wall_wood"].sounds)
+signs_lib.standard_steel_sign_sounds = table.copy(minetest.registered_items["default:sign_wall_steel"].sounds)
+
 signs_lib.standard_yaw = {
 	0,
 	math.pi / -2,
