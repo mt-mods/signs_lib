@@ -798,16 +798,18 @@ function signs_lib.register_sign(name, rdef)
 		local hdef = table.copy(def)
 		hdef.paramtype2 = "facedir"
 
-		hdef.selection_box = rdef.selection_box or signs_lib.make_selection_boxes(35, 32, false, 0, 3, -18.5, true)
-		hdef.node_box = rdef.node_box or rdef.selection_box or hdef.selection_box
+		local hcbox = signs_lib.make_selection_boxes(35, 32, false, 0, 3, -18.5, true)
+
+		hdef.selection_box = rdef.hanging_selection_box or hcbox
+		hdef.node_box = rdef.hanging_node_box or rdef.hanging_selection_box or hcbox
 
 		hdef.groups.not_in_creative_inventory = 1
 		hdef.tiles[3] = "signs_lib_hangers.png"
-		hdef.mesh = string.gsub(hdef.mesh, ".obj$", "_hanging.obj")
+		hdef.mesh = string.gsub(string.gsub(hdef.mesh, "_facedir.obj", ".obj"), ".obj$", "_hanging.obj")
 		hdef.on_rotate = nil
 
 		if hdef.entity_info then
-			hdef.entity_info.mesh = string.gsub(hdef.entity_info.mesh, ".obj$", "_hanging.obj")
+			hdef.entity_info.mesh = string.gsub(string.gsub(hdef.entity_info.mesh, "_facedir.obj", ".obj"), ".obj$", "_hanging.obj")
 			hdef.entity_info.yaw = signs_lib.standard_yaw
 		end
 

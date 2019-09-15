@@ -21,7 +21,8 @@ signs_lib.register_sign("default:sign_wall_steel", {
 	groups = signs_lib.standard_steel_groups,
 	sounds = signs_lib.standard_steel_sign_sounds,
 	locked = true,
-	entity_info = "standard"
+	entity_info = "standard",
+	allow_hanging = true,
 })
 
 minetest.register_alias("signs:sign_hanging", "default:sign_wall_wood_hanging")
