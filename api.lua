@@ -15,14 +15,16 @@ signs_lib.standard_vscale = 1
 signs_lib.standard_lspace = 1
 signs_lib.standard_fsize = 15
 signs_lib.standard_xoffs = 4
-signs_lib.standard_yoffs = 2
+signs_lib.standard_yoffs = 0
 signs_lib.standard_cpl = 35
 
 signs_lib.standard_wood_groups = table.copy(minetest.registered_items["default:sign_wall_wood"].groups)
 signs_lib.standard_wood_groups.sign = 1
+signs_lib.standard_wood_groups.attached_node = nil
 
 signs_lib.standard_steel_groups = table.copy(minetest.registered_items["default:sign_wall_steel"].groups)
 signs_lib.standard_steel_groups.sign = 1
+signs_lib.standard_steel_groups.attached_node = nil
 
 signs_lib.standard_wood_sign_sounds  = table.copy(minetest.registered_items["default:sign_wall_wood"].sounds)
 signs_lib.standard_steel_sign_sounds = table.copy(minetest.registered_items["default:sign_wall_steel"].sounds)
@@ -567,7 +569,7 @@ minetest.register_entity("signs_lib:text", {
 -- make selection boxes
 -- sizex/sizey specified in inches because that's what MUTCD uses.
 
-function signs_lib.make_selection_boxes(sizex, sizey, onpole, xoffs, yoffs, zoffs, fdir)
+function signs_lib.make_selection_boxes(sizex, sizey, foo, xoffs, yoffs, zoffs, is_facedir)
 
 	local tx = (sizex * 0.0254 ) / 2
 	local ty = (sizey * 0.0254 ) / 2
@@ -575,34 +577,18 @@ function signs_lib.make_selection_boxes(sizex, sizey, onpole, xoffs, yoffs, zoff
 	local yo = yoffs and yoffs * 0.0254 or 0
 	local zo = zoffs and zoffs * 0.0254 or 0
 
-	if onpole == "_onpole" then
-		if not fdir then
-			return {
-				type = "wallmounted",
-				wall_side =   { -0.5 - 0.3125 + zo, -ty + yo, -tx + xo, -0.4375 - 0.3125 + zo, ty + yo , tx + xo },
-				wall_top =    {-0.5, -0.5, -0.5, 0.5, 0.5, 0.5 },
-				wall_bottom = {-0.5, -0.5, -0.5, 0.5, 0.5, 0.5 },
-			}
-		else
-			return {
-				type = "fixed",
-				fixed = { -tx + xo, -ty + yo, 0.5 + 0.3125 + zo, tx + xo, ty + yo, 0.4375 + 0.3125 + zo }
-			}
-		end
+	if not is_facedir then
+		return {
+			type = "wallmounted",
+			wall_side =   { -0.5 + zo, -ty + yo, -tx + xo, -0.4375 + zo, ty + yo, tx + xo },
+			wall_top =    { -tx - xo, 0.5 + zo, -ty + yo, tx - xo, 0.4375 + zo, ty + yo},
+			wall_bottom = { -tx - xo, -0.5 + zo, -ty + yo, tx - xo, -0.4375 + zo, ty + yo }
+		}
 	else
-		if not fdir then
-			return {
-				type = "wallmounted",
-				wall_side =   { -0.5 + zo, -ty + yo, -tx + xo, -0.4375 + zo, ty + yo, tx + xo },
-				wall_top =    { -tx - xo, 0.5 + zo, -ty + yo, tx - xo, 0.4375 + zo, ty + yo},
-				wall_bottom = { -tx - xo, -0.5 + zo, -ty + yo, tx - xo, -0.4375 + zo, ty + yo }
-			}
-		else
-			return {
-				type = "fixed",
-				fixed = { -tx + xo, -ty + yo, 0.5 + zo, tx + xo, ty + yo, 0.4375 + zo}
-			}
-		end
+		return {
+			type = "fixed",
+			fixed = { -tx + xo, -ty + yo, 0.5 + zo, tx + xo, ty + yo, 0.4375 + zo}
+		}
 	end
 end
 
@@ -610,9 +596,6 @@ function signs_lib.check_for_pole(pos, pointed_thing)
 	local ppos = minetest.get_pointed_thing_position(pointed_thing)
 	local pnode = minetest.get_node(ppos)
 	local pdef = minetest.registered_items[pnode.name]
-
-	print(dump(pos))
-	print(dump(ppos))
 
 	if (signs_lib.allowed_poles[pnode.name]
 		  or (pdef and pdef.drawtype == "fencelike")
@@ -624,18 +607,19 @@ function signs_lib.check_for_pole(pos, pointed_thing)
 		)
 	  and
 		(pos.x ~= ppos.x or pos.z ~= ppos.z) then
-		print("signs_lib.check_for_pole returned true")
 		return true
 	end
 end
 
 function signs_lib.after_place_node(pos, placer, itemstack, pointed_thing, locked)
+	local playername = placer:get_player_name()
+	local def = minetest.registered_items[itemstack:get_name()]
+
 	local ppos = minetest.get_pointed_thing_position(pointed_thing)
 	local pnode = minetest.get_node(ppos)
 	local pdef = minetest.registered_items[pnode.name]
-	local playername = placer:get_player_name()
 
-	if signs_lib.check_for_pole(pos, pointed_thing) then
+	if (def.allow_onpole ~= false) and signs_lib.check_for_pole(pos, pointed_thing) then
 		local node = minetest.get_node(pos)
 		minetest.swap_node(pos, {name = itemstack:get_name().."_onpole", param2 = node.param2})
 	end
@@ -648,6 +632,154 @@ end
 
 function signs_lib.register_fence_with_sign()
 	minetest.log("warning", "[signs_lib] ".."Attempt to call no longer used function signs_lib.register_fence_with_sign()")
+end
+
+--[[
+The main sign registration function
+===================================
+
+Example minimal recommended def for writable signs:
+
+signs_lib.register_sign("foo:my_cool_sign", {
+	description = "Wooden cool sign",
+	inventory_image = "signs_lib_sign_cool_inv.png",
+	tiles = {
+		"signs_lib_sign_cool.png",
+		"signs_lib_sign_cool_edges.png"
+	},
+	number_of_lines = 2,
+	horiz_scaling = 0.8,
+	vert_scaling = 1,
+	line_spacing = 9,
+	font_size = 31,
+	x_offset = 7,
+	y_offset = 4,
+	chars_per_line = 40,
+	entity_info = "standard"
+})
+
+* default def assumes a wallmounted sign with on-pole being allowed.
+
+*For signs that can't support onpole, include in the def:
+	allow_onpole = false,
+
+* "standard" entity info implies the standard wood/steel sign model, in
+  wallmounted mode.  For facedir signs using the standard model, use:
+
+	entity_info = {
+		mesh = "signs_lib_standard_wall_sign_entity.obj",
+		yaw = signs_lib.standard_yaw
+	},
+
+]]--
+
+function signs_lib.register_sign(name, rdef)
+
+	local def = table.copy(rdef)
+
+	if rdef.entity_info == "standard" then
+		def.entity_info = {
+			mesh = "signs_lib_standard_wall_sign_entity.obj",
+			yaw = signs_lib.wallmounted_yaw
+		}
+	elseif rdef.entity_info then
+		def.entity_info = rdef.entity_info
+	end
+
+	if rdef.entity_info then
+		def.on_rightclick       = rdef.on_rightclick       or signs_lib.construct_sign
+		def.on_construct        = rdef.on_construct        or signs_lib.construct_sign
+		def.on_destruct         = rdef.on_destruct         or signs_lib.destruct_sign
+		def.on_receive_fields   = rdef.on_receive_fields   or signs_lib.receive_fields
+		def.on_punch            = rdef.on_punch            or signs_lib.update_sign
+		def.number_of_lines     = rdef.number_of_lines     or signs_lib.standard_lines
+		def.horiz_scaling       = rdef.horiz_scaling       or signs_lib.standard_hscale
+		def.vert_scaling        = rdef.vert_scaling        or signs_lib.standard_vscale
+		def.line_spacing        = rdef.line_spacing        or signs_lib.standard_lspace
+		def.font_size           = rdef.font_size           or signs_lib.standard_fsize
+		def.x_offset            = rdef.x_offset            or signs_lib.standard_xoffs
+		def.y_offset            = rdef.y_offset            or signs_lib.standard_yoffs
+		def.chars_per_line      = rdef.chars_per_line      or signs_lib.standard_cpl
+		def.default_color       = rdef.default_color       or "0"
+		if rdef.locked and not rdef.after_place_node then
+			def.after_place_node = function(pos, placer, itemstack, pointed_thing)
+				signs_lib.after_place_node(pos, placer, itemstack, pointed_thing, true)
+			end
+		else
+			def.after_place_node = rdef.after_place_node or signs_lib.after_place_node
+		end
+	end
+
+	def.paramtype           = rdef.paramtype           or "light"
+	def.paramtype2          = rdef.paramtype2          or "wallmounted"
+	def.drawtype            = rdef.drawtype            or "mesh"
+	def.mesh                = rdef.mesh                or "signs_lib_standard_wall_sign.obj"
+	def.wield_image         = rdef.wield_image         or def.inventory_image
+	def.drop                = rdef.drop                or name
+	def.sounds              = rdef.sounds              or signs_lib.standard_wood_sign_sounds
+	def.on_rotate           = rdef.on_rotate           or signs_lib.wallmounted_rotate
+
+	if rdef.on_rotate then
+		def.on_rotate = rdef.on_rotate
+	elseif rdef.drawtype == "wallmounted" then
+		def.on_rotate = signs_lib.wallmounted_rotate
+	else
+		def.on_rotate = signs_lib.facedir_rotate
+	end
+
+	if rdef.groups then
+		def.groups = rdef.groups
+	else
+		def.groups = signs_lib.standard_wood_groups
+	end
+
+	local cbox = signs_lib.make_selection_boxes(35, 25, allow_onpole)
+
+	def.selection_box = rdef.selection_box or cbox
+	def.node_box      = table.copy(rdef.node_box or rdef.selection_box or cbox)
+
+	if def.sunlight_propagates ~= false then
+		def.sunlight_propagates = true
+	end
+
+	minetest.register_node(":"..name, def)
+	table.insert(signs_lib.lbm_restore_nodes, name)
+
+	if rdef.allow_onpole ~= false then
+
+		local opdef = table.copy(def)
+
+		local offset = 0.3125
+		if opdef.uses_slim_pole_mount then
+			offset = 0.35
+		end
+
+		if opdef.paramtype2 == "wallmounted" then
+			opdef.node_box.wall_side[1] = def.node_box.wall_side[1] - offset
+			opdef.node_box.wall_side[4] = def.node_box.wall_side[4] - offset
+
+			opdef.selection_box.wall_side[1] = def.selection_box.wall_side[1] - offset
+			opdef.selection_box.wall_side[4] = def.selection_box.wall_side[4] - offset
+		else
+			opdef.node_box.fixed[3] = def.node_box.fixed[3] + offset
+			opdef.node_box.fixed[6] = def.node_box.fixed[6] + offset
+
+			opdef.selection_box.fixed[3] = def.selection_box.fixed[3] + offset
+			opdef.selection_box.fixed[6] = def.selection_box.fixed[6] + offset
+		end
+
+		opdef.groups.not_in_creative_inventory = 1
+		opdef.tiles[3] = "signs_lib_pole_mount.png"
+		opdef.mesh = string.gsub(opdef.mesh, ".obj$", "_onpole.obj")
+		opdef.on_rotate = nil
+
+
+		if opdef.entity_info then
+			opdef.entity_info.mesh = string.gsub(opdef.entity_info.mesh, ".obj$", "_onpole.obj")
+		end
+		minetest.register_node(":"..name.."_onpole", opdef)
+		table.insert(signs_lib.lbm_restore_nodes, name.."_onpole")
+	end
 end
 
 -- restore signs' text after /clearobjects and the like, the next time
