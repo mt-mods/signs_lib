@@ -434,14 +434,38 @@ local function set_obj_text(obj, text, x, pos)
 	})
 end
 
-signs_lib.construct_sign = function(pos)
-	local meta = minetest.get_meta(pos)
-	meta:set_string(
-		"formspec",
-		"size[6,4]"..
+local function make_widefont_nodename(name)
+	if string.find(name, "_widefont") then return name end
+	if string.find(name, "_onpole")  then
+		return string.gsub(name, "_onpole", "_widefont_onpole")
+	elseif string.find(name, "_hanging") then
+		return string.gsub(name, "_hanging", "_widefont_hanging")
+	else
+		return name.."_widefont"
+	end
+end
+
+function signs_lib.construct_sign(pos)
+	local form = "size[6,4]"..
 		"textarea[0,-0.3;6.5,3;text;;${text}]"..
-		"button_exit[2,3.4;2,1;ok;"..S("Write").."]"..
-		"background[-0.5,-0.5;7,5;signs_lib_sign_bg.jpg]")
+		"background[-0.5,-0.5;7,5;signs_lib_sign_bg.jpg]"
+	local node = minetest.get_node(pos)
+	local wname = make_widefont_nodename(node.name)
+
+	if minetest.registered_items[wname] then
+		local state = "off"
+		if string.find(node.name, "widefont") then state = "on" end
+		form = form.."label[1,3.4;Use wide font]"..
+			"image_button[1.1,3.7;1,0.6;signs_lib_switch_"..
+			state..".png;"..
+			state..";;;false;signs_lib_switch_interm.png]"..
+			"button_exit[3,3.4;2,1;ok;"..S("Write").."]"
+	else
+		form = form.."button_exit[2,3.4;2,1;ok;"..S("Write").."]"
+	end
+
+	local meta = minetest.get_meta(pos)
+	meta:set_string("formspec", form)
 	local i = meta:get_string("infotext")
 	if i == "" then -- it wasn't even set, so set it.
 		meta:set_string("infotext", "")
@@ -512,13 +536,36 @@ function signs_lib.update_sign(pos, fields)
 end
 
 function signs_lib.receive_fields(pos, formname, fields, sender)
-	if fields and fields.text and fields.ok and signs_lib.can_modify(pos, sender) then
+
+	if not fields or not signs_lib.can_modify(pos, sender) then return end
+
+	if fields.text and fields.ok then
 		minetest.log("action", S("@1 wrote \"@2\" to sign at @3",
 			(sender:get_player_name() or ""),
 			fields.text:gsub('\\', '\\\\'):gsub("\n", "\\n"),
 			minetest.pos_to_string(pos)
 		))
 		signs_lib.update_sign(pos, fields)
+	elseif fields.on or fields.off then
+		local node = minetest.get_node(pos)
+		local newname
+
+		if fields.on and string.find(node.name, "widefont") then
+			newname = string.gsub(node.name, "_widefont", "")
+		elseif fields.off and not string.find(node.name, "widefont") then
+			newname = make_widefont_nodename(node.name)
+		end
+		if newname then
+			minetest.log("action", S("@1 flipped the wide-font switch to \"@2\" at @3",
+				(sender:get_player_name() or ""),
+				(fields.on and "off" or "on"),
+				minetest.pos_to_string(pos)
+			))
+
+			minetest.swap_node(pos, {name = newname, param2 = node.param2})
+			signs_lib.construct_sign(pos)
+			signs_lib.update_sign(pos, fields)
+		end
 	end
 end
 
@@ -646,47 +693,7 @@ function signs_lib.register_fence_with_sign()
 	minetest.log("warning", "[signs_lib] ".."Attempt to call no longer used function signs_lib.register_fence_with_sign()")
 end
 
---[[
-The main sign registration function
-===================================
-
-Example minimal recommended def for writable signs:
-
-signs_lib.register_sign("foo:my_cool_sign", {
-	description = "Wooden cool sign",
-	inventory_image = "signs_lib_sign_cool_inv.png",
-	tiles = {
-		"signs_lib_sign_cool.png",
-		"signs_lib_sign_cool_edges.png"
-	},
-	number_of_lines = 2,
-	horiz_scaling = 0.8,
-	vert_scaling = 1,
-	line_spacing = 9,
-	font_size = 31,
-	x_offset = 7,
-	y_offset = 4,
-	chars_per_line = 40,
-	entity_info = "standard"
-})
-
-* default def assumes a wallmounted sign with on-pole being allowed.
-
-*For signs that can't support onpole, include in the def:
-	allow_onpole = false,
-
-* "standard" entity info implies the standard wood/steel sign model, in
-  wallmounted mode.  For facedir signs using the standard model, use:
-
-	entity_info = {
-		mesh = "signs_lib_standard_wall_sign_entity.obj",
-		yaw = signs_lib.standard_yaw
-	},
-
-]]--
-
-function signs_lib.register_sign(name, rdef)
-
+local function register_sign(name, rdef)
 	local def = table.copy(rdef)
 
 	if rdef.entity_info == "standard" then
@@ -819,7 +826,58 @@ function signs_lib.register_sign(name, rdef)
 		minetest.register_node(":"..name.."_hanging", hdef)
 		table.insert(signs_lib.lbm_restore_nodes, name.."_hanging")
 	end
+end
 
+--[[
+The main sign registration function
+===================================
+
+Example minimal recommended def for writable signs:
+
+signs_lib.register_sign("foo:my_cool_sign", {
+	description = "Wooden cool sign",
+	inventory_image = "signs_lib_sign_cool_inv.png",
+	tiles = {
+		"signs_lib_sign_cool.png",
+		"signs_lib_sign_cool_edges.png"
+	},
+	number_of_lines = 2,
+	horiz_scaling = 0.8,
+	vert_scaling = 1,
+	line_spacing = 9,
+	font_size = 31,
+	x_offset = 7,
+	y_offset = 4,
+	chars_per_line = 40,
+	entity_info = "standard"
+})
+
+* default def assumes a wallmounted sign with on-pole being allowed.
+
+*For signs that can't support onpole, include in the def:
+	allow_onpole = false,
+
+* "standard" entity info implies the standard wood/steel sign model, in
+  wallmounted mode.  For facedir signs using the standard model, use:
+
+	entity_info = {
+		mesh = "signs_lib_standard_wall_sign_entity.obj",
+		yaw = signs_lib.standard_yaw
+	},
+
+]]--
+
+function signs_lib.register_sign(name, rdef)
+	register_sign(name, rdef)
+
+	if rdef.allow_widefont then
+
+		wdef = table.copy(minetest.registered_items[name])
+		wdef.groups.not_in_creative_inventory = 1
+		wdef.horiz_scaling = wdef.horiz_scaling / 2
+
+		register_sign(name.."_widefont", wdef)
+	end
 end
 
 -- restore signs' text after /clearobjects and the like, the next time
