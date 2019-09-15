@@ -667,6 +667,7 @@ function signs_lib.check_for_ceiling(pointed_thing)
 end
 
 function signs_lib.after_place_node(pos, placer, itemstack, pointed_thing, locked)
+	print("after_place_node")
 	local playername = placer:get_player_name()
 	local def = minetest.registered_items[itemstack:get_name()]
 
@@ -705,6 +706,8 @@ local function register_sign(name, rdef)
 		def.entity_info = rdef.entity_info
 	end
 
+	def.after_place_node = rdef.after_place_node or signs_lib.after_place_node
+
 	if rdef.entity_info then
 		def.on_rightclick       = rdef.on_rightclick       or signs_lib.construct_sign
 		def.on_construct        = rdef.on_construct        or signs_lib.construct_sign
@@ -724,8 +727,6 @@ local function register_sign(name, rdef)
 			def.after_place_node = function(pos, placer, itemstack, pointed_thing)
 				signs_lib.after_place_node(pos, placer, itemstack, pointed_thing, true)
 			end
-		else
-			def.after_place_node = rdef.after_place_node or signs_lib.after_place_node
 		end
 	end
 
