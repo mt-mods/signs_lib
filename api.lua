@@ -766,6 +766,9 @@ function signs_lib.register_sign(name, rdef)
 			offset = 0.35
 		end
 
+		opdef.selection_box = rdef.onpole_selection_box or opdef.selection_box
+		opdef.node_box = rdef.onpole_node_box or opdef.selection_box
+
 		if opdef.paramtype2 == "wallmounted" then
 			opdef.node_box.wall_side[1] = def.node_box.wall_side[1] - offset
 			opdef.node_box.wall_side[4] = def.node_box.wall_side[4] - offset
