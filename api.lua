@@ -532,7 +532,7 @@ function signs_lib.update_sign(pos, fields)
 	text = trim_input(text)
 
 	local owner = meta:get_string("owner")
-	ownstr = ""
+	local ownstr = ""
 	if owner ~= "" then ownstr = S("Locked sign, owned by @1\n", owner) end
 
 	meta:set_string("text", text)
