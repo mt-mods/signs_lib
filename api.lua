@@ -29,6 +29,8 @@ signs_lib.standard_steel_groups.attached_node = nil
 signs_lib.standard_wood_sign_sounds  = table.copy(minetest.registered_items["default:sign_wall_wood"].sounds)
 signs_lib.standard_steel_sign_sounds = table.copy(minetest.registered_items["default:sign_wall_steel"].sounds)
 
+signs_lib.default_text_scale = {x=10, y=10}
+
 signs_lib.standard_yaw = {
 	0,
 	math.pi / -2,
@@ -83,7 +85,59 @@ signs_lib.rotate_walldir = {
 -- Initialize character texture cache
 local ctexcache = {}
 
-signs_lib.wallmounted_rotate = function(pos, node, user, mode)
+-- entity handling
+
+minetest.register_entity("signs_lib:text", {
+	collisionbox = { 0, 0, 0, 0, 0, 0 },
+	visual = "mesh",
+	mesh = "signs_lib_standard_wall_sign_entity.obj",
+	textures = {},
+	static_save = false
+})
+
+function signs_lib.delete_objects(pos)
+	print("delete_objects()")
+	local objects = minetest.get_objects_inside_radius(pos, 0.5)
+	for _, v in ipairs(objects) do
+		v:remove()
+	end
+end
+
+function signs_lib.spawn_entity(pos, texture)
+	print("spawn_entity()")
+	local node = minetest.get_node(pos)
+	local def = minetest.registered_items[node.name]
+	if not def or not def.entity_info or not def.entity_info.yaw[node.param2 + 1] then return end
+
+	local text_scale = (node and node.text_scale) or signs_lib.default_text_scale
+	local objects = minetest.get_objects_inside_radius(pos, 0.5)
+	local obj
+
+	if #objects > 0 then
+		obj = objects[1]
+	else
+		obj = minetest.add_entity(pos, "signs_lib:text")
+	end
+
+	obj:setyaw(def.entity_info.yaw[node.param2 + 1])
+
+	if not texture then
+		obj:set_properties({
+			mesh = def.entity_info.mesh,
+			visual_size = text_scale,
+		})
+	else
+		obj:set_properties({
+			mesh = def.entity_info.mesh,
+			visual_size = text_scale,
+			textures={texture},
+		})
+	end
+end
+
+-- rotation
+
+function signs_lib.wallmounted_rotate(pos, node, user, mode)
 	if not signs_lib.can_modify(pos, user) then return false end
 
 	if mode ~= screwdriver.ROTATE_FACE or string.match(node.name, "_onpole") then
@@ -93,17 +147,12 @@ signs_lib.wallmounted_rotate = function(pos, node, user, mode)
 	local newparam2 = signs_lib.rotate_walldir[node.param2] or 0
 
 	minetest.swap_node(pos, { name = node.name, param2 = newparam2 })
-	for _, v in ipairs(minetest.get_objects_inside_radius(pos, 0.5)) do
-		local e = v:get_luaentity()
-		if e and e.name == "signs_lib:text" then
-			v:remove()
-		end
-	end
+	signs_lib.delete_objects(pos)
 	signs_lib.update_sign(pos)
 	return true
 end
 
-signs_lib.facedir_rotate = function(pos, node, user, mode)
+function signs_lib.facedir_rotate(pos, node, user, mode)
 	if not signs_lib.can_modify(pos, user) then return false end
 
 	if mode ~= screwdriver.ROTATE_FACE or string.match(node.name, "_onpole") then
@@ -113,17 +162,10 @@ signs_lib.facedir_rotate = function(pos, node, user, mode)
 	local newparam2 = signs_lib.rotate_facedir[node.param2] or 0
 
 	minetest.swap_node(pos, { name = node.name, param2 = newparam2 })
-	for _, v in ipairs(minetest.get_objects_inside_radius(pos, 0.5)) do
-		local e = v:get_luaentity()
-		if e and e.name == "signs_lib:text" then
-			v:remove()
-		end
-	end
+	signs_lib.delete_objects(pos)
 	signs_lib.update_sign(pos)
 	return true
 end
-
-local DEFAULT_TEXT_SCALE = {x=10, y=10}
 
 -- infinite stacks
 
@@ -234,15 +276,6 @@ local sign_groups = {choppy=2, dig_immediate=2}
 local fences_with_sign = { }
 
 -- some local helper functions
-
-local function split_lines_and_words(text)
-	if not text then return end
-	local lines = { }
-	for _, line in ipairs(text:split("\n")) do
-		table.insert(lines, line:split(" "))
-	end
-	return lines
-end
 
 local math_max = math.max
 
@@ -422,16 +455,22 @@ local function make_sign_texture(lines, pos)
 	return table.concat(texture, "")
 end
 
-local function set_obj_text(obj, text, x, pos)
-	local split = split_lines_and_words
+function signs_lib.split_lines_and_words(text)
+	if not text then return end
+	local lines = { }
+	for _, line in ipairs(text:split("\n")) do
+		table.insert(lines, line:split(" "))
+	end
+	return lines
+end
+
+function signs_lib.set_obj_text(pos, text)
+	print("set_obj_text()")
+	local split = signs_lib.split_lines_and_words
 	local text_ansi = Utf8ToAnsi(text)
 	local n = minetest.registered_nodes[minetest.get_node(pos).name]
-	local text_scale = (n and n.text_scale) or DEFAULT_TEXT_SCALE
-	local texture = make_sign_texture(split(text_ansi), pos)
-	obj:set_properties({
-		textures={texture},
-		visual_size = text_scale,
-	})
+	signs_lib.delete_objects(pos)
+	signs_lib.spawn_entity(pos, make_sign_texture(split(text_ansi), pos))
 end
 
 local function make_widefont_nodename(name)
@@ -473,18 +512,12 @@ function signs_lib.construct_sign(pos)
 end
 
 function signs_lib.destruct_sign(pos)
-	local objects = minetest.get_objects_inside_radius(pos, 0.5)
-	for _, v in ipairs(objects) do
-		local e = v:get_luaentity()
-		if e and e.name == "signs_lib:text" then
-			v:remove()
-		end
-	end
+	signs_lib.delete_objects(pos)
 end
 
 local function make_infotext(text)
 	text = trim_input(text)
-	local lines = split_lines_and_words(text) or {}
+	local lines = signs_lib.split_lines_and_words(text) or {}
 	local lines2 = { }
 	for _, line in ipairs(lines) do
 		table.insert(lines2, (table.concat(line, " "):gsub("#[0-9a-fA-F]", ""):gsub("##", "#")))
@@ -504,35 +537,7 @@ function signs_lib.update_sign(pos, fields)
 
 	meta:set_string("text", text)
 	meta:set_string("infotext", ownstr..make_infotext(text).." ")
-
-	local objects = minetest.get_objects_inside_radius(pos, 0.5)
-	local found
-	for _, v in ipairs(objects) do
-		local e = v:get_luaentity()
-		if e and e.name == "signs_lib:text" then
-			if found then
-				v:remove()
-			else
-				set_obj_text(v, text, nil, pos)
-				found = true
-			end
-		end
-	end
-	if found then
-		return
-	end
-
-	-- if there is no entity
-	local signnode = minetest.get_node(pos)
-	local signname = signnode.name
-	local def = minetest.registered_items[signname]
-	if not def.entity_info or not def.entity_info.yaw[signnode.param2 + 1] then return end
-	local obj = minetest.add_entity(pos, "signs_lib:text")
-
-	obj:setyaw(def.entity_info.yaw[signnode.param2 + 1])
-	obj:set_properties({
-		mesh = def.entity_info.mesh,
-	})
+	signs_lib.set_obj_text(pos, text)
 end
 
 function signs_lib.receive_fields(pos, formname, fields, sender)
@@ -588,30 +593,6 @@ function signs_lib.can_modify(pos, player)
 	minetest.record_protection_violation(pos, playername)
 	return false
 end
-
-local signs_text_on_activate = function(self)
-	local pos = self.object:getpos()
-	local meta = minetest.get_meta(pos)
-	local signnode = minetest.get_node(pos)
-	local signname = signnode.name
-	local def = minetest.registered_items[signname]
-	local text = meta:get_string("text")
-	if text and def and def.entity_info then
-		text = trim_input(text)
-		set_obj_text(self.object, text, nil, pos)
-		self.object:set_properties({
-			mesh = def.entity_info.mesh,
-		})
-	end
-end
-
-minetest.register_entity("signs_lib:text", {
-	collisionbox = { 0, 0, 0, 0, 0, 0 },
-	visual = "mesh",
-	mesh = "signs_lib_standard_wall_sign_entity.obj",
-	textures = {},
-	on_activate = signs_text_on_activate,
-})
 
 -- make selection boxes
 -- sizex/sizey specified in inches because that's what MUTCD uses.
@@ -916,12 +897,7 @@ minetest.register_lbm({
 			local oldfence =  signs_lib.old_fenceposts[node.name]
 			local newsign =   signs_lib.old_fenceposts_replacement_signs[node.name]
 
-			for _, v in ipairs(minetest.get_objects_inside_radius(pos, 0.5)) do
-				local e = v:get_luaentity()
-				if e and e.name == "signs_lib:text" then
-					v:remove()
-				end
-			end
+			signs_lib.delete_objects(pos)
 
 			local oldmeta = minetest.get_meta(pos):to_table()
 			minetest.set_node(pos, {name = oldfence})
@@ -984,12 +960,7 @@ minetest.register_chatcommand("regen_signs", {
 
 		for _, b in pairs(allsigns) do
 			for _, pos in ipairs(b) do
-				local objects = minetest.get_objects_inside_radius(pos, 0.5)
-				if #objects > 0 then
-					for _, v in ipairs(objects) do
-						v:remove()
-					end
-				end
+				signs_lib.delete_objects(pos)
 				local node = minetest.get_node(pos)
 				local def = minetest.registered_items[node.name]
 				if def and def.entity_info then
