@@ -63,23 +63,55 @@ signs_lib.wall_fdir_to_back = {
 	{  1,  0 },
 }
 
-signs_lib.rotate_facedir = {
-	[0] = 1,
-	[1] = 6,
-	[2] = 3,
-	[3] = 0,
-	[4] = 2,
-	[5] = 6,
-	[6] = 4
+signs_lib.fdir_to_back_left = {
+	[0] = { -1,  1 },
+	[1] = {  1,  1 },
+	[2] = {  1, -1 },
+	[3] = { -1, -1 }
+}
+
+signs_lib.wall_fdir_to_back_left = {
+	[2] = {  1,  1 },
+	[3] = { -1, -1 },
+	[4] = { -1,  1 },
+	[5] = {  1, -1 }
 }
 
 signs_lib.rotate_walldir = {
-	[0] = 1,
-	[1] = 5,
-	[2] = 0,
+	[0] = 4,
+	[1] = 0,
+	[2] = 5,
+	[3] = 1,
+	[4] = 2,
+	[5] = 3
+}
+
+signs_lib.rotate_walldir_simple = {
+	[0] = 4,
+	[1] = 4,
+	[2] = 5,
 	[3] = 4,
 	[4] = 2,
 	[5] = 3
+}
+
+signs_lib.rotate_facedir = {
+	[0] = 1,
+	[1] = 2,
+	[2] = 3,
+	[3] = 4,
+	[4] = 6,
+	[5] = 6,
+	[6] = 0
+}
+
+signs_lib.rotate_facedir_simple = {
+	[0] = 1,
+	[1] = 2,
+	[2] = 3,
+	[3] = 0,
+	[4] = 0,
+	[5] = 0
 }
 
 -- Initialize character texture cache
@@ -162,33 +194,50 @@ end
 
 -- rotation
 
-function signs_lib.wallmounted_rotate(pos, node, user, mode)
-	if not signs_lib.can_modify(pos, user) then return false end
-
-	if mode ~= screwdriver.ROTATE_FACE or string.match(node.name, "_onpole") then
+function signs_lib.handle_rotation(pos, node, user, mode)
+	if not signs_lib.can_modify(pos, user)
+	  or mode ~= screwdriver.ROTATE_FACE then
 		return false
 	end
+	local newparam2
+	local tpos = pos
+	local def = minetest.registered_items[node.name]
 
-	local newparam2 = signs_lib.rotate_walldir[node.param2] or 0
+	if string.match(node.name, "_onpole") then
+		local newparam2 = signs_lib.rotate_walldir_simple[node.param2] or 4
+		local t = signs_lib.wall_fdir_to_back_left
 
-	minetest.swap_node(pos, { name = node.name, param2 = newparam2 })
-	signs_lib.delete_objects(pos)
-	signs_lib.update_sign(pos)
-	return true
-end
+		if def.paramtype2 ~= "wallmounted" then
+			newparam2 = signs_lib.rotate_facedir_simple[node.param2] or 0
+			t  = signs_lib.fdir_to_back_left
+		end
 
-function signs_lib.facedir_rotate(pos, node, user, mode)
-	if not signs_lib.can_modify(pos, user) then return false end
+		tpos = {
+			x = pos.x + t[node.param2][1],
+			y = pos.y,
+			z = pos.z + t[node.param2][2]
+		}
 
-	if mode ~= screwdriver.ROTATE_FACE or string.match(node.name, "_onpole") then
-		return false
+		local node2 = minetest.get_node(tpos)
+		local def2 = minetest.registered_items[node2.name]
+		if not def2 or not def2.buildable_to then return true end -- undefined, or not buildable_to.
+
+
+		minetest.set_node(tpos, {name = node.name, param2 = newparam2})
+		minetest.get_meta(tpos):from_table(minetest.get_meta(pos):to_table())
+		minetest.remove_node(pos)
+		signs_lib.delete_objects(pos)
+
+	elseif string.match(node.name, "_hanging") or string.match(node.name, "yard") then
+		minetest.swap_node(tpos, { name = node.name, param2 = signs_lib.rotate_facedir_simple[node.param2] or 0 })
+	elseif minetest.registered_items[node.name].paramtype2 == "wallmounted" then
+		minetest.swap_node(tpos, { name = node.name, param2 = signs_lib.rotate_walldir[node.param2] or 0 })
+	else
+		minetest.swap_node(tpos, { name = node.name, param2 = signs_lib.rotate_facedir[node.param2] or 0 })
 	end
 
-	local newparam2 = signs_lib.rotate_facedir[node.param2] or 0
-
-	minetest.swap_node(pos, { name = node.name, param2 = newparam2 })
-	signs_lib.delete_objects(pos)
-	signs_lib.update_sign(pos)
+	signs_lib.delete_objects(tpos)
+	signs_lib.update_sign(tpos)
 	return true
 end
 
@@ -742,16 +791,8 @@ local function register_sign(name, rdef)
 	def.wield_image         = rdef.wield_image         or def.inventory_image
 	def.drop                = rdef.drop                or name
 	def.sounds              = rdef.sounds              or signs_lib.standard_wood_sign_sounds
-	def.on_rotate           = rdef.on_rotate           or signs_lib.wallmounted_rotate
 	def.paramtype2          = rdef.paramtype2          or "wallmounted"
-
-	if rdef.on_rotate then
-		def.on_rotate = rdef.on_rotate
-	elseif rdef.drawtype == "wallmounted" then
-		def.on_rotate = signs_lib.wallmounted_rotate
-	else
-		def.on_rotate = signs_lib.facedir_rotate
-	end
+	def.on_rotate           = rdef.on_rotate           or signs_lib.handle_rotation
 
 	if rdef.groups then
 		def.groups = rdef.groups
@@ -800,8 +841,6 @@ local function register_sign(name, rdef)
 		opdef.groups.not_in_creative_inventory = 1
 		opdef.tiles[3] = "signs_lib_pole_mount.png"
 		opdef.mesh = string.gsub(opdef.mesh, ".obj$", "_onpole.obj")
-		opdef.on_rotate = nil
-
 
 		if opdef.entity_info then
 			opdef.entity_info.mesh = string.gsub(opdef.entity_info.mesh, ".obj$", "_onpole.obj")
@@ -823,7 +862,6 @@ local function register_sign(name, rdef)
 		hdef.groups.not_in_creative_inventory = 1
 		hdef.tiles[3] = "signs_lib_hangers.png"
 		hdef.mesh = string.gsub(string.gsub(hdef.mesh, "_facedir.obj", ".obj"), ".obj$", "_hanging.obj")
-		hdef.on_rotate = nil
 
 		if hdef.entity_info then
 			hdef.entity_info.mesh = string.gsub(string.gsub(hdef.entity_info.mesh, "_facedir.obj", ".obj"), ".obj$", "_hanging.obj")
