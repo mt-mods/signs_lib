@@ -105,7 +105,7 @@ end
 function signs_lib.spawn_entity(pos, texture)
 	local node = minetest.get_node(pos)
 	local def = minetest.registered_items[node.name]
-	if not def or not def.entity_info or not def.entity_info.yaw[node.param2 + 1] then return end
+	if not def or not def.entity_info then return end
 
 	local text_scale = (node and node.text_scale) or signs_lib.default_text_scale
 	local objects = minetest.get_objects_inside_radius(pos, 0.5)
@@ -117,19 +117,46 @@ function signs_lib.spawn_entity(pos, texture)
 		obj = minetest.add_entity(pos, "signs_lib:text")
 	end
 
-	obj:setyaw(def.entity_info.yaw[node.param2 + 1])
+	local yaw = def.entity_info.yaw[node.param2 + 1]
+	local pitch = 0
 
-	if not texture then
-		obj:set_properties({
-			mesh = def.entity_info.mesh,
-			visual_size = text_scale,
-		})
-	else
-		obj:set_properties({
-			mesh = def.entity_info.mesh,
-			visual_size = text_scale,
-			textures={texture},
-		})
+	if not string.find(node.name, "onpole") and not string.find(node.name, "hanging") then
+		local rot90 = math.pi/2
+
+		if def.paramtype2 == "wallmounted" then
+			if node.param2 == 1 then -- on floor
+				pitch = -rot90
+				yaw = 0
+			elseif node.param2 == 0 then -- on ceiling
+				pitch = rot90
+				yaw = math.pi
+			end
+		elseif def.paramtype2 == "facedir" then
+			if node.param2 == 4 then
+				pitch = -rot90
+				yaw = 0
+			elseif node.param2 == 6 then
+				pitch = rot90
+				yaw = math.pi
+			end
+		end
+	end
+
+	if yaw then
+		obj:set_rotation({x = pitch, y = yaw, z=0})
+
+		if not texture then
+			obj:set_properties({
+				mesh = def.entity_info.mesh,
+				visual_size = text_scale,
+			})
+		else
+			obj:set_properties({
+				mesh = def.entity_info.mesh,
+				visual_size = text_scale,
+				textures={texture},
+			})
+		end
 	end
 end
 
