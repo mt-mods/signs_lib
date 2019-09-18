@@ -732,7 +732,7 @@ local function register_sign(name, rdef)
 		def.groups = signs_lib.standard_wood_groups
 	end
 
-	local cbox = signs_lib.make_selection_boxes(35, 25, allow_onpole)
+	local cbox = signs_lib.make_selection_boxes(35, 25)
 
 	def.selection_box = rdef.selection_box or cbox
 	def.node_box      = table.copy(rdef.node_box or rdef.selection_box or cbox)
@@ -788,7 +788,7 @@ local function register_sign(name, rdef)
 		local hdef = table.copy(def)
 		hdef.paramtype2 = "facedir"
 
-		local hcbox = signs_lib.make_selection_boxes(35, 32, false, 0, 3, -18.5, true)
+		local hcbox = signs_lib.make_selection_boxes(35, 32, nil, 0, 3, -18.5, true)
 
 		hdef.selection_box = rdef.hanging_selection_box or hcbox
 		hdef.node_box = rdef.hanging_node_box or rdef.hanging_selection_box or hcbox
@@ -852,7 +852,7 @@ function signs_lib.register_sign(name, rdef)
 
 	if rdef.allow_widefont then
 
-		wdef = table.copy(minetest.registered_items[name])
+		local wdef = table.copy(minetest.registered_items[name])
 		wdef.groups.not_in_creative_inventory = 1
 		wdef.horiz_scaling = wdef.horiz_scaling / 2
 
