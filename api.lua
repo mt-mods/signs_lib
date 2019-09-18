@@ -96,7 +96,6 @@ minetest.register_entity("signs_lib:text", {
 })
 
 function signs_lib.delete_objects(pos)
-	print("delete_objects()")
 	local objects = minetest.get_objects_inside_radius(pos, 0.5)
 	for _, v in ipairs(objects) do
 		v:remove()
@@ -104,7 +103,6 @@ function signs_lib.delete_objects(pos)
 end
 
 function signs_lib.spawn_entity(pos, texture)
-	print("spawn_entity()")
 	local node = minetest.get_node(pos)
 	local def = minetest.registered_items[node.name]
 	if not def or not def.entity_info or not def.entity_info.yaw[node.param2 + 1] then return end
@@ -465,7 +463,6 @@ function signs_lib.split_lines_and_words(text)
 end
 
 function signs_lib.set_obj_text(pos, text)
-	print("set_obj_text()")
 	local split = signs_lib.split_lines_and_words
 	local text_ansi = Utf8ToAnsi(text)
 	local n = minetest.registered_nodes[minetest.get_node(pos).name]
@@ -649,7 +646,6 @@ function signs_lib.check_for_ceiling(pointed_thing)
 end
 
 function signs_lib.after_place_node(pos, placer, itemstack, pointed_thing, locked)
-	print("after_place_node")
 	local playername = placer:get_player_name()
 	local def = minetest.registered_items[itemstack:get_name()]
 
