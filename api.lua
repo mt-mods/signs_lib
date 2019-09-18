@@ -419,6 +419,7 @@ end
 local function make_sign_texture(lines, pos)
 	local node = minetest.get_node(pos)
 	local def = minetest.registered_items[node.name]
+	if not def then return end
 
 	local font_size
 	local line_width
