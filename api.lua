@@ -722,6 +722,14 @@ function signs_lib.check_for_ceiling(pointed_thing)
 	end
 end
 
+function signs_lib.check_for_floor(pointed_thing)
+	if pointed_thing.above.x == pointed_thing.under.x
+	  and pointed_thing.above.z == pointed_thing.under.z
+	  and pointed_thing.above.y > pointed_thing.under.y then
+		return true
+	end
+end
+
 function signs_lib.after_place_node(pos, placer, itemstack, pointed_thing, locked)
 	local playername = placer:get_player_name()
 	local def = minetest.registered_items[itemstack:get_name()]
@@ -737,6 +745,10 @@ function signs_lib.after_place_node(pos, placer, itemstack, pointed_thing, locke
 		local newparam2 = minetest.dir_to_facedir(placer:get_look_dir())
 		local node = minetest.get_node(pos)
 		minetest.swap_node(pos, {name = itemstack:get_name().."_hanging", param2 = newparam2})
+	elseif def.paramtype2 == "facedir" and signs_lib.check_for_ceiling(pointed_thing) then
+		minetest.swap_node(pos, {name = itemstack:get_name(), param2 = 6})
+	elseif def.paramtype2 == "facedir" and signs_lib.check_for_floor(pointed_thing) then
+		minetest.swap_node(pos, {name = itemstack:get_name(), param2 = 4})
 	end
 	if locked then
 		local meta = minetest.get_meta(pos)
