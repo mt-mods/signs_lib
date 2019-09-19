@@ -739,8 +739,18 @@ function signs_lib.after_place_node(pos, placer, itemstack, pointed_thing, locke
 	local pdef = minetest.registered_items[pnode.name]
 
 	if (def.allow_onpole ~= false) and signs_lib.check_for_pole(pos, pointed_thing) then
+		print("allow onpole")
+		print(def.paramtype2)
+		local newparam2
+		local lookdir = minetest.yaw_to_dir(placer:get_look_horizontal())
+		if def.paramtype2 == "wallmounted" then
+			newparam2 = minetest.dir_to_wallmounted(lookdir)
+		else
+			newparam2 = minetest.dir_to_facedir(lookdir)
+		end
 		local node = minetest.get_node(pos)
-		minetest.swap_node(pos, {name = itemstack:get_name().."_onpole", param2 = node.param2})
+		print(node.param2, newparam2)
+		minetest.swap_node(pos, {name = itemstack:get_name().."_onpole", param2 = newparam2})
 	elseif def.allow_hanging and signs_lib.check_for_ceiling(pointed_thing) then
 		local newparam2 = minetest.dir_to_facedir(placer:get_look_dir())
 		local node = minetest.get_node(pos)
