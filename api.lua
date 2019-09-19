@@ -124,7 +124,8 @@ minetest.register_entity("signs_lib:text", {
 	visual = "mesh",
 	mesh = "signs_lib_standard_wall_sign_entity.obj",
 	textures = {},
-	static_save = false
+	static_save = false,
+	backface_culling = false
 })
 
 function signs_lib.delete_objects(pos)
