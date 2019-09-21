@@ -807,7 +807,7 @@ function signs_lib.after_place_node(pos, placer, itemstack, pointed_thing, locke
 	local ppos = minetest.get_pointed_thing_position(pointed_thing)
 	local pnode = minetest.get_node(ppos)
 	local pdef = minetest.registered_items[pnode.name]
-	if (def.allow_onpole ~= false) and signs_lib.check_for_pole(pos, pointed_thing) then
+	if def.allow_onpole and signs_lib.check_for_pole(pos, pointed_thing) then
 		local newparam2
 		local lookdir = minetest.yaw_to_dir(placer:get_look_horizontal())
 		if def.paramtype2 == "wallmounted" then
@@ -912,7 +912,7 @@ local function register_sign(name, rdef)
 
 	local opdef = table.copy(def)
 
-	if rdef.allow_onpole ~= false or rdef.allow_onpole_horizontal then
+	if rdef.allow_onpole or rdef.allow_onpole_horizontal then
 
 		local offset = 0.3125
 		if opdef.uses_slim_pole_mount then
@@ -947,7 +947,7 @@ local function register_sign(name, rdef)
 	-- setting one of item 3 or 4 to a texture and leaving the other "blank",
 	-- reveals either the vertical or horizontal pole mount part of the model
 
-	if rdef.allow_onpole ~= false then
+	if rdef.allow_onpole then
 		opdef.tiles[3] = "signs_lib_pole_mount.png"
 		opdef.tiles[4] = "signs_lib_blank.png"
 		minetest.register_node(":"..name.."_onpole", opdef)
@@ -1013,8 +1013,15 @@ signs_lib.register_sign("foo:my_cool_sign", {
 
 * default def assumes a wallmounted sign with on-pole being allowed.
 
-*For signs that can't support onpole, include in the def:
-	allow_onpole = false,
+*For signs that can support being on a pole, include in the def:
+	allow_onpole = true,
+	(defaults to disabled)
+
+*For signs that can support being on a horizontal pole, include in the def:
+	allow_onpole_horizontal = true,
+	(defaults to disabled)
+
+* onpole/onpole_horizontal are independent; one may be allowed without the other
 
 * "standard" entity info implies the standard wood/steel sign model, in
   wallmounted mode.  For facedir signs using the standard model, use:

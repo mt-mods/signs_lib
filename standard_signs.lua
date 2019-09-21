@@ -10,6 +10,7 @@ signs_lib.register_sign("default:sign_wall_wood", {
 	entity_info = "standard",
 	allow_hanging = true,
 	allow_widefont = true,
+	allow_onpole = true,
 	allow_onpole_horizontal = true
 })
 
@@ -26,6 +27,7 @@ signs_lib.register_sign("default:sign_wall_steel", {
 	entity_info = "standard",
 	allow_hanging = true,
 	allow_widefont = true,
+	allow_onpole = true,
 	allow_onpole_horizontal = true
 })
 
