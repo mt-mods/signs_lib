@@ -147,6 +147,78 @@ signs_lib.flip_walldir = {
 	[5] = 4
 }
 
+local htj_north = {
+	[1] = true,
+	[3] = true,
+	[9] = true,
+	[11] = true,
+	[21] = true,
+	[23] = true
+}
+
+local htj_east = {
+	[0] = true,
+	[2] = true,
+	[16] = true,
+	[18] = true,
+	[20] = true,
+	[22] = true
+}
+
+local htj_south = {
+	[1] = true,
+	[3] = true,
+	[5] = true,
+	[7] = true,
+	[21] = true,
+	[23] = true
+}
+
+local htj_west = {
+	[0] = true,
+	[2] = true,
+	[12] = true,
+	[14] = true,
+	[20] = true,
+	[22] = true
+}
+
+local vtj_north = {
+	[8] = true,
+	[10] = true,
+	[13] = true,
+	[15] = true,
+	[17] = true,
+	[19] = true
+}
+
+local vtj_east = {
+	[4] = true,
+	[6] = true,
+	[8] = true,
+	[10] = true,
+	[17] = true,
+	[19] = true
+}
+
+local vtj_south = {
+	[4] = true,
+	[6] = true,
+	[13] = true,
+	[15] = true,
+	[17] = true,
+	[10] = true
+}
+
+local vtj_west = {
+	[4] = true,
+	[6] = true,
+	[8] = true,
+	[10] = true,
+	[13] = true,
+	[15] = true
+}
+
 -- Initialize character texture cache
 local ctexcache = {}
 
@@ -747,6 +819,9 @@ function signs_lib.make_selection_boxes(sizex, sizey, foo, xoffs, yoffs, zoffs, 
 end
 
 function signs_lib.check_for_pole(pos, pointed_thing)
+	local node = minetest.get_node(pos)
+	local def = minetest.registered_items[node.name]
+
 	local ppos = minetest.get_pointed_thing_position(pointed_thing)
 	local pnode = minetest.get_node(ppos)
 	local pdef = minetest.registered_items[pnode.name]
@@ -761,6 +836,22 @@ function signs_lib.check_for_pole(pos, pointed_thing)
 	  or (pnode.name == "streets:bigpole" and pnode.param2 > 19 and pnode.param2 < 24) )
 	  and (pos.x ~= ppos.x or pos.z ~= ppos.z) then
 		return true
+	elseif pnode.name == "streets:bigpole_tjunction" then
+		if def.paramtype2 == "wallmounted" then
+			if   (node.param2 == 4 and vtj_north[pnode.param2])
+			  or (node.param2 == 2 and vtj_east[pnode.param2])
+			  or (node.param2 == 5 and vtj_south[pnode.param2])
+			  or (node.param2 == 3 and vtj_west[pnode.param2]) then
+				return true
+			end
+		else
+			if   (node.param2 == 0 and vtj_north[pnode.param2])
+			  or (node.param2 == 1 and vtj_east[pnode.param2])
+			  or (node.param2 == 2 and vtj_south[pnode.param2])
+			  or (node.param2 == 3 and vtj_west[pnode.param2]) then
+				return true
+			end
+		end
 	end
 end
 
@@ -786,6 +877,22 @@ function signs_lib.check_for_horizontal_pole(pos, pointed_thing)
 			end
 		else
 			if node.param2 == 0 or node.param2 == 2 then
+				return true
+			end
+		end
+	elseif pnode.name == "streets:bigpole_tjunction" then
+		if def.paramtype2 == "wallmounted" then
+			if   (node.param2 == 4 and htj_north[pnode.param2])
+			  or (node.param2 == 2 and htj_east[pnode.param2])
+			  or (node.param2 == 5 and htj_south[pnode.param2])
+			  or (node.param2 == 3 and htj_west[pnode.param2]) then
+				return true
+			end
+		else
+			if   (node.param2 == 0 and htj_north[pnode.param2])
+			  or (node.param2 == 1 and htj_east[pnode.param2])
+			  or (node.param2 == 2 and htj_south[pnode.param2])
+			  or (node.param2 == 3 and htj_west[pnode.param2]) then
 				return true
 			end
 		end
