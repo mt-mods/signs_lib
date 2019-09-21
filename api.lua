@@ -769,16 +769,24 @@ function signs_lib.check_for_horizontal_pole(pos, pointed_thing)
 	local def = minetest.registered_items[node.name]
 	local ppos = minetest.get_pointed_thing_position(pointed_thing)
 	local pnode = minetest.get_node(ppos)
-	if pnode.name == "streets:bigpole" then
+	if pnode.name == "streets:bigpole" and pnode.param2 > 3 and pnode.param2 < 12 then
 		if def.paramtype2 == "wallmounted" then
-			if   ((node.param2 == 2 or node.param2 == 3) and (pnode.param2 > 3 and pnode.param2 < 12)) -- E/W
-			  or ((node.param2 == 4 or node.param2 == 5) and (pnode.param2 > 11 and pnode.param2 < 20)) -- N/S
+			if node.param2 == 2 or node.param2 == 3 -- E/W
 				then return true
 			end
 		else
-			if   ((node.param2 == 1 or node.param2 == 3) and (pnode.param2 > 3 and pnode.param2 < 12)) -- E/W
-			  or ((node.param2 == 0 or node.param2 == 2) and (pnode.param2 > 11 and pnode.param2 < 20)) -- N/S
+			if node.param2 == 1 or node.param2 == 3 -- E/W
 				then return true
+			end
+		end
+	elseif pnode.name == "streets:bigpole" and pnode.param2 > 11 and pnode.param2 < 20 then
+		if def.paramtype2 == "wallmounted" then
+			if node.param2 == 4 or node.param2 == 5 then
+				return true
+			end
+		else
+			if node.param2 == 0 or node.param2 == 2 then
+				return true
 			end
 		end
 	end
