@@ -63,6 +63,20 @@ signs_lib.wall_fdir_to_back = {
 	{  1,  0 },
 }
 
+signs_lib.fdir_flip_to_back = {
+	[0] = {  0,  2 },
+	[1] = {  2,  0 },
+	[2] = {  0, -2 },
+	[3] = { -2,  0 }
+}
+
+signs_lib.wall_fdir_flip_to_back = {
+	[2] = {  2,  0 },
+	[3] = { -2,  0 },
+	[4] = {  0,  2 },
+	[5] = {  0, -2 },
+}
+
 signs_lib.fdir_to_back_left = {
 	[0] = { -1,  1 },
 	[1] = {  1,  1 },
@@ -112,6 +126,25 @@ signs_lib.rotate_facedir_simple = {
 	[3] = 0,
 	[4] = 0,
 	[5] = 0
+}
+
+signs_lib.flip_facedir = {
+	[0] = 2,
+	[1] = 3,
+	[2] = 0,
+	[3] = 1,
+	[4] = 6,
+	[5] = 4,
+	[6] = 4
+}
+
+signs_lib.flip_walldir = {
+	[0] = 1,
+	[1] = 0,
+	[2] = 3,
+	[3] = 2,
+	[4] = 5,
+	[5] = 4
 }
 
 -- Initialize character texture cache
@@ -205,30 +238,44 @@ function signs_lib.handle_rotation(pos, node, user, mode)
 	local def = minetest.registered_items[node.name]
 
 	if string.match(node.name, "_onpole") then
-		local newparam2 = signs_lib.rotate_walldir_simple[node.param2] or 4
-		local t = signs_lib.wall_fdir_to_back_left
+		if not string.match(node.name, "_horiz") then
+			newparam2 = signs_lib.rotate_walldir_simple[node.param2] or 4
+			local t = signs_lib.wall_fdir_to_back_left
 
-		if def.paramtype2 ~= "wallmounted" then
-			newparam2 = signs_lib.rotate_facedir_simple[node.param2] or 0
-			t  = signs_lib.fdir_to_back_left
+			if def.paramtype2 ~= "wallmounted" then
+				newparam2 = signs_lib.rotate_facedir_simple[node.param2] or 0
+				t  = signs_lib.fdir_to_back_left
+			end
+
+			tpos = {
+				x = pos.x + t[node.param2][1],
+				y = pos.y,
+				z = pos.z + t[node.param2][2]
+			}
+		else
+			-- flip the sign to the other side of the horizontal pole
+			newparam2 = signs_lib.flip_walldir[node.param2] or 4
+			local t = signs_lib.wall_fdir_flip_to_back
+
+			if def.paramtype2 ~= "wallmounted" then
+				newparam2 = signs_lib.flip_facedir[node.param2] or 0
+				t  = signs_lib.fdir_flip_to_back
+			end
+
+			tpos = {
+				x = pos.x + t[node.param2][1],
+				y = pos.y,
+				z = pos.z + t[node.param2][2]
+			}
 		end
-
-		tpos = {
-			x = pos.x + t[node.param2][1],
-			y = pos.y,
-			z = pos.z + t[node.param2][2]
-		}
-
 		local node2 = minetest.get_node(tpos)
 		local def2 = minetest.registered_items[node2.name]
 		if not def2 or not def2.buildable_to then return true end -- undefined, or not buildable_to.
-
 
 		minetest.set_node(tpos, {name = node.name, param2 = newparam2})
 		minetest.get_meta(tpos):from_table(minetest.get_meta(pos):to_table())
 		minetest.remove_node(pos)
 		signs_lib.delete_objects(pos)
-
 	elseif string.match(node.name, "_hanging") or string.match(node.name, "yard") then
 		minetest.swap_node(tpos, { name = node.name, param2 = signs_lib.rotate_facedir_simple[node.param2] or 0 })
 	elseif minetest.registered_items[node.name].paramtype2 == "wallmounted" then
@@ -551,7 +598,11 @@ end
 local function make_widefont_nodename(name)
 	if string.find(name, "_widefont") then return name end
 	if string.find(name, "_onpole")  then
-		return string.gsub(name, "_onpole", "_widefont_onpole")
+		if string.find(name, "_horiz") then
+			return string.gsub(name, "_onpole_horiz", "_widefont_onpole_horiz")
+		else
+			return string.gsub(name, "_onpole", "_widefont_onpole")
+		end
 	elseif string.find(name, "_hanging") then
 		return string.gsub(name, "_hanging", "_widefont_hanging")
 	else
@@ -701,17 +752,35 @@ function signs_lib.check_for_pole(pos, pointed_thing)
 	local pdef = minetest.registered_items[pnode.name]
 
 	if (signs_lib.allowed_poles[pnode.name]
-		  or (pdef and pdef.drawtype == "fencelike")
-		  or string.find(pnode.name, "default:fence_")
-		  or string.find(pnode.name, "_post")
-		  or string.find(pnode.name, "fencepost")
-		  or string.find(pnode.name, "streets:streetlamp_basic_top")
-		  or (pnode.name == "streets:bigpole" and pnode.param2 < 4)
-		  or (pnode.name == "streets:bigpole" and pnode.param2 > 19 and pnode.param2 < 24)
-		)
-	  and
-		(pos.x ~= ppos.x or pos.z ~= ppos.z) then
+	  or (pdef and pdef.drawtype == "fencelike")
+	  or string.find(pnode.name, "default:fence_")
+	  or string.find(pnode.name, "_post")
+	  or string.find(pnode.name, "fencepost")
+	  or string.find(pnode.name, "streets:streetlamp_basic_top")
+	  or (pnode.name == "streets:bigpole" and pnode.param2 < 4)
+	  or (pnode.name == "streets:bigpole" and pnode.param2 > 19 and pnode.param2 < 24) )
+	  and (pos.x ~= ppos.x or pos.z ~= ppos.z) then
 		return true
+	end
+end
+
+function signs_lib.check_for_horizontal_pole(pos, pointed_thing)
+	local node = minetest.get_node(pos)
+	local def = minetest.registered_items[node.name]
+	local ppos = minetest.get_pointed_thing_position(pointed_thing)
+	local pnode = minetest.get_node(ppos)
+	if pnode.name == "streets:bigpole" then
+		if def.paramtype2 == "wallmounted" then
+			if   ((node.param2 == 2 or node.param2 == 3) and (pnode.param2 > 3 and pnode.param2 < 12)) -- E/W
+			  or ((node.param2 == 4 or node.param2 == 5) and (pnode.param2 > 11 and pnode.param2 < 20)) -- N/S
+				then return true
+			end
+		else
+			if   ((node.param2 == 1 or node.param2 == 3) and (pnode.param2 > 3 and pnode.param2 < 12)) -- E/W
+			  or ((node.param2 == 0 or node.param2 == 2) and (pnode.param2 > 11 and pnode.param2 < 20)) -- N/S
+				then return true
+			end
+		end
 	end
 end
 
@@ -738,7 +807,6 @@ function signs_lib.after_place_node(pos, placer, itemstack, pointed_thing, locke
 	local ppos = minetest.get_pointed_thing_position(pointed_thing)
 	local pnode = minetest.get_node(ppos)
 	local pdef = minetest.registered_items[pnode.name]
-
 	if (def.allow_onpole ~= false) and signs_lib.check_for_pole(pos, pointed_thing) then
 		local newparam2
 		local lookdir = minetest.yaw_to_dir(placer:get_look_horizontal())
@@ -749,6 +817,16 @@ function signs_lib.after_place_node(pos, placer, itemstack, pointed_thing, locke
 		end
 		local node = minetest.get_node(pos)
 		minetest.swap_node(pos, {name = itemstack:get_name().."_onpole", param2 = newparam2})
+	elseif def.allow_onpole_horizontal and signs_lib.check_for_horizontal_pole(pos, pointed_thing) then
+		local newparam2
+		local lookdir = minetest.yaw_to_dir(placer:get_look_horizontal())
+		if def.paramtype2 == "wallmounted" then
+			newparam2 = minetest.dir_to_wallmounted(lookdir)
+		else
+			newparam2 = minetest.dir_to_facedir(lookdir)
+		end
+		local node = minetest.get_node(pos)
+		minetest.swap_node(pos, {name = itemstack:get_name().."_onpole_horiz", param2 = newparam2})
 	elseif def.allow_hanging and signs_lib.check_for_ceiling(pointed_thing) then
 		local newparam2 = minetest.dir_to_facedir(placer:get_look_dir())
 		local node = minetest.get_node(pos)
@@ -832,9 +910,9 @@ local function register_sign(name, rdef)
 	minetest.register_node(":"..name, def)
 	table.insert(signs_lib.lbm_restore_nodes, name)
 
-	if rdef.allow_onpole ~= false then
+	local opdef = table.copy(def)
 
-		local opdef = table.copy(def)
+	if rdef.allow_onpole ~= false or rdef.allow_onpole_horizontal then
 
 		local offset = 0.3125
 		if opdef.uses_slim_pole_mount then
@@ -859,14 +937,30 @@ local function register_sign(name, rdef)
 		end
 
 		opdef.groups.not_in_creative_inventory = 1
-		opdef.tiles[3] = "signs_lib_pole_mount.png"
 		opdef.mesh = string.gsub(opdef.mesh, ".obj$", "_onpole.obj")
 
 		if opdef.entity_info then
 			opdef.entity_info.mesh = string.gsub(opdef.entity_info.mesh, ".obj$", "_onpole.obj")
 		end
+	end
+
+	-- setting one of item 3 or 4 to a texture and leaving the other "blank",
+	-- reveals either the vertical or horizontal pole mount part of the model
+
+	if rdef.allow_onpole ~= false then
+		opdef.tiles[3] = "signs_lib_pole_mount.png"
+		opdef.tiles[4] = "signs_lib_blank.png"
 		minetest.register_node(":"..name.."_onpole", opdef)
 		table.insert(signs_lib.lbm_restore_nodes, name.."_onpole")
+	end
+
+	local ophdef = table.copy(opdef)
+
+	if rdef.allow_onpole_horizontal then
+		ophdef.tiles[3] = "signs_lib_blank.png"
+		ophdef.tiles[4] = "signs_lib_pole_mount.png"
+		minetest.register_node(":"..name.."_onpole_horiz", ophdef)
+		table.insert(signs_lib.lbm_restore_nodes, name.."_onpole_horiz")
 	end
 
 	if rdef.allow_hanging then

@@ -9,7 +9,8 @@ signs_lib.register_sign("default:sign_wall_wood", {
 	},
 	entity_info = "standard",
 	allow_hanging = true,
-	allow_widefont = true
+	allow_widefont = true,
+	allow_onpole_horizontal = true
 })
 
 signs_lib.register_sign("default:sign_wall_steel", {
@@ -24,7 +25,8 @@ signs_lib.register_sign("default:sign_wall_steel", {
 	locked = true,
 	entity_info = "standard",
 	allow_hanging = true,
-	allow_widefont = true
+	allow_widefont = true,
+	allow_onpole_horizontal = true
 })
 
 minetest.register_alias("signs:sign_hanging", "default:sign_wall_wood_hanging")
