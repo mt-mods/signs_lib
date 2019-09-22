@@ -1,3 +1,5 @@
 default
 intllib?
 screwdriver?
+streetspoles?
+streetlamps?
