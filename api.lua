@@ -31,6 +31,11 @@ signs_lib.standard_steel_sign_sounds = table.copy(minetest.registered_items["def
 
 signs_lib.default_text_scale = {x=10, y=10}
 
+signs_lib.old_widefont_signs = {}
+
+signs_lib.block_list = {}
+signs_lib.totalblocks = 0
+
 signs_lib.standard_yaw = {
 	0,
 	math.pi / -2,
@@ -614,6 +619,8 @@ end
 
 local function make_sign_texture(lines, pos)
 	local node = minetest.get_node(pos)
+	local meta = minetest.get_meta(pos)
+
 	local def = minetest.registered_items[node.name]
 	if not def or not def.entity_info then return end
 
@@ -622,16 +629,21 @@ local function make_sign_texture(lines, pos)
 	local line_height
 	local char_width
 	local colorbgw
+	local widemult = 1
+
+	if meta:get_int("widefont") == 1 then
+		widemult = 0.5
+	end
 
 	if def.font_size and def.font_size == 31 then
 		font_size = 31
-		line_width = math.floor(signs_lib.avgwidth31 * def.chars_per_line) * def.horiz_scaling
+		line_width = math.floor(signs_lib.avgwidth31 * def.chars_per_line) * (def.horiz_scaling * widemult)
 		line_height = signs_lib.lineheight31
 		char_width = signs_lib.charwidth31
 		colorbgw = signs_lib.colorbgw31
 	else
 		font_size = 15
-		line_width = math.floor(signs_lib.avgwidth15 * def.chars_per_line) * def.horiz_scaling
+		line_width = math.floor(signs_lib.avgwidth15 * def.chars_per_line) * (def.horiz_scaling * widemult)
 		line_height = signs_lib.lineheight15
 		char_width = signs_lib.charwidth15
 		colorbgw = signs_lib.colorbgw15
@@ -667,31 +679,17 @@ function signs_lib.set_obj_text(pos, text)
 	signs_lib.spawn_entity(pos, make_sign_texture(split(text_ansi), pos))
 end
 
-local function make_widefont_nodename(name)
-	if string.find(name, "_widefont") then return name end
-	if string.find(name, "_onpole")  then
-		if string.find(name, "_horiz") then
-			return string.gsub(name, "_onpole_horiz", "_widefont_onpole_horiz")
-		else
-			return string.gsub(name, "_onpole", "_widefont_onpole")
-		end
-	elseif string.find(name, "_hanging") then
-		return string.gsub(name, "_hanging", "_widefont_hanging")
-	else
-		return name.."_widefont"
-	end
-end
-
 function signs_lib.construct_sign(pos)
 	local form = "size[6,4]"..
 		"textarea[0,-0.3;6.5,3;text;;${text}]"..
 		"background[-0.5,-0.5;7,5;signs_lib_sign_bg.jpg]"
 	local node = minetest.get_node(pos)
-	local wname = make_widefont_nodename(node.name)
+	local def = minetest.registered_items[node.name]
+	local meta = minetest.get_meta(pos)
 
-	if minetest.registered_items[wname] then
+	if def.allow_widefont then
 		local state = "off"
-		if string.find(node.name, "widefont") then state = "on" end
+		if meta:get_int("widefont") == 1 then state = "on" end
 		form = form.."label[1,3.4;Use wide font]"..
 			"image_button[1.1,3.7;1,0.6;signs_lib_switch_"..
 			state..".png;"..
@@ -701,7 +699,6 @@ function signs_lib.construct_sign(pos)
 		form = form.."button_exit[2,3.4;2,1;ok;"..S("Write").."]"
 	end
 
-	local meta = minetest.get_meta(pos)
 	meta:set_string("formspec", form)
 	local i = meta:get_string("infotext")
 	if i == "" then -- it wasn't even set, so set it.
@@ -751,21 +748,22 @@ function signs_lib.receive_fields(pos, formname, fields, sender)
 		signs_lib.update_sign(pos, fields)
 	elseif fields.on or fields.off then
 		local node = minetest.get_node(pos)
-		local newname
+		local meta = minetest.get_meta(pos)
+		local change
 
-		if fields.on and string.find(node.name, "widefont") then
-			newname = string.gsub(node.name, "_widefont", "")
-		elseif fields.off and not string.find(node.name, "widefont") then
-			newname = make_widefont_nodename(node.name)
+		if fields.on and meta:get_int("widefont") == 1 then
+			meta:set_int("widefont", 0)
+			change = true
+		elseif fields.off and meta:get_int("widefont") == 0 then
+			meta:set_int("widefont", 1)
+			change = true
 		end
-		if newname then
+		if change then
 			minetest.log("action", S("@1 flipped the wide-font switch to \"@2\" at @3",
 				(sender:get_player_name() or ""),
 				(fields.on and "off" or "on"),
 				minetest.pos_to_string(pos)
 			))
-
-			minetest.swap_node(pos, {name = newname, param2 = node.param2})
 			signs_lib.construct_sign(pos)
 			signs_lib.update_sign(pos, fields)
 		end
@@ -962,7 +960,53 @@ function signs_lib.register_fence_with_sign()
 	minetest.log("warning", "[signs_lib] ".."Attempt to call no longer used function signs_lib.register_fence_with_sign()")
 end
 
-local function register_sign(name, rdef)
+--[[
+The main sign registration function
+===================================
+
+Example minimal recommended def for writable signs:
+
+signs_lib.register_sign("foo:my_cool_sign", {
+	description = "Wooden cool sign",
+	inventory_image = "signs_lib_sign_cool_inv.png",
+	tiles = {
+		"signs_lib_sign_cool.png",
+		"signs_lib_sign_cool_edges.png"
+	},
+	number_of_lines = 2,
+	horiz_scaling = 0.8,
+	vert_scaling = 1,
+	line_spacing = 9,
+	font_size = 31,
+	x_offset = 7,
+	y_offset = 4,
+	chars_per_line = 40,
+	entity_info = "standard"
+})
+
+* default def assumes a wallmounted sign with on-pole being allowed.
+
+*For signs that can support being on a pole, include in the def:
+	allow_onpole = true,
+	(defaults to disabled)
+
+*For signs that can support being on a horizontal pole, include in the def:
+	allow_onpole_horizontal = true,
+	(defaults to disabled)
+
+* onpole/onpole_horizontal are independent; one may be allowed without the other
+
+* "standard" entity info implies the standard wood/steel sign model, in
+  wallmounted mode.  For facedir signs using the standard model, use:
+
+	entity_info = {
+		mesh = "signs_lib_standard_wall_sign_entity.obj",
+		yaw = signs_lib.standard_yaw
+	},
+
+]]--
+
+function signs_lib.register_sign(name, rdef)
 	local def = table.copy(rdef)
 
 	if rdef.entity_info == "standard" then
@@ -1100,64 +1144,9 @@ local function register_sign(name, rdef)
 		minetest.register_node(":"..name.."_hanging", hdef)
 		table.insert(signs_lib.lbm_restore_nodes, name.."_hanging")
 	end
-end
-
---[[
-The main sign registration function
-===================================
-
-Example minimal recommended def for writable signs:
-
-signs_lib.register_sign("foo:my_cool_sign", {
-	description = "Wooden cool sign",
-	inventory_image = "signs_lib_sign_cool_inv.png",
-	tiles = {
-		"signs_lib_sign_cool.png",
-		"signs_lib_sign_cool_edges.png"
-	},
-	number_of_lines = 2,
-	horiz_scaling = 0.8,
-	vert_scaling = 1,
-	line_spacing = 9,
-	font_size = 31,
-	x_offset = 7,
-	y_offset = 4,
-	chars_per_line = 40,
-	entity_info = "standard"
-})
-
-* default def assumes a wallmounted sign with on-pole being allowed.
-
-*For signs that can support being on a pole, include in the def:
-	allow_onpole = true,
-	(defaults to disabled)
-
-*For signs that can support being on a horizontal pole, include in the def:
-	allow_onpole_horizontal = true,
-	(defaults to disabled)
-
-* onpole/onpole_horizontal are independent; one may be allowed without the other
-
-* "standard" entity info implies the standard wood/steel sign model, in
-  wallmounted mode.  For facedir signs using the standard model, use:
-
-	entity_info = {
-		mesh = "signs_lib_standard_wall_sign_entity.obj",
-		yaw = signs_lib.standard_yaw
-	},
-
-]]--
-
-function signs_lib.register_sign(name, rdef)
-	register_sign(name, rdef)
 
 	if rdef.allow_widefont then
-
-		local wdef = table.copy(minetest.registered_items[name])
-		wdef.groups.not_in_creative_inventory = 1
-		wdef.horiz_scaling = wdef.horiz_scaling / 2
-
-		register_sign(name.."_widefont", wdef)
+		table.insert(signs_lib.old_widefont_signs, name.."_widefont")
 	end
 end
 
@@ -1207,8 +1196,22 @@ minetest.register_lbm({
 	end
 })
 
-signs_lib.block_list = {}
-signs_lib.totalblocks = 0
+-- Convert widefont sign nodes to use one base node with meta flag to select wide mode
+
+minetest.register_lbm({
+	nodenames = signs_lib.old_widefont_signs,
+	name = "signs_lib:convert_widefont_signs",
+	label = "Convert widefont sign nodes",
+	run_at_every_load = false,
+	action = function(pos, node)
+		local basename = string.gsub(node.name, "_widefont", "")
+		minetest.swap_node(pos, {name = basename, param2 = node.param2})
+		local meta = minetest.get_meta(pos)
+		meta:set_int("widefont", 1)
+		signs_lib.delete_objects(pos)
+		signs_lib.update_sign(pos)
+	end
+})
 
 -- Maintain a list of currently-loaded blocks
 minetest.register_lbm({
