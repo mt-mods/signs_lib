@@ -665,7 +665,7 @@ end
 function signs_lib.split_lines_and_words(text)
 	if not text then return end
 	local lines = { }
-	for _, line in ipairs(text:split("\n")) do
+	for _, line in ipairs(text:split("\n", true)) do
 		table.insert(lines, line:split(" "))
 	end
 	return lines
