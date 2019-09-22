@@ -1028,6 +1028,7 @@ function signs_lib.register_sign(name, rdef)
 
 	if rdef.allow_widefont then
 		table.insert(signs_lib.old_widefont_signs, name.."_widefont")
+		table.insert(signs_lib.old_widefont_signs, name.."_widefont_onpole")
 	end
 end
 
