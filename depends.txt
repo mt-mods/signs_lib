@@ -3,3 +3,4 @@ intllib?
 screwdriver?
 streetspoles?
 streetlamps?
+cottages?

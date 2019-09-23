@@ -13,6 +13,28 @@ for _, n in ipairs(default_fences) do
 	})
 end
 
+if minetest.get_modpath("cottages") then
+	local cbox = table.copy(minetest.registered_items["cottages:table"].node_box)
+	minetest.override_item("cottages:table", {
+		check_for_pole = true,
+		selection_box = cbox
+	})
+end
+
+if minetest.get_modpath("prefab_redo") then
+	minetest.override_item("prefab_redo:concrete_railing", {
+		check_for_pole = true,
+		selection_box = {
+			type = "connected",
+			connect_right = { -0.125, -0.5, -0.125, 0.5,   0.375, 0.125 },
+			connect_left  = { -0.5,   -0.5, -0.125, 0.125, 0.375, 0.125 },
+			connect_back  = { -0.125, -0.5, -0.125, 0.125, 0.375, 0.5   },
+			connect_front = { -0.125, -0.5, -0.5,   0.125, 0.375, 0.125 },
+			fixed = {}
+		}
+	})
+end
+
 if minetest.get_modpath("streetspoles") then
 
 	local htj_north = {
