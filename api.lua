@@ -841,52 +841,6 @@ function signs_lib.register_fence_with_sign()
 	minetest.log("warning", "[signs_lib] ".."Attempt to call no longer used function signs_lib.register_fence_with_sign()")
 end
 
---[[
-The main sign registration function
-===================================
-
-Example minimal recommended def for writable signs:
-
-signs_lib.register_sign("foo:my_cool_sign", {
-	description = "Wooden cool sign",
-	inventory_image = "signs_lib_sign_cool_inv.png",
-	tiles = {
-		"signs_lib_sign_cool.png",
-		"signs_lib_sign_cool_edges.png"
-	},
-	number_of_lines = 2,
-	horiz_scaling = 0.8,
-	vert_scaling = 1,
-	line_spacing = 9,
-	font_size = 31,
-	x_offset = 7,
-	y_offset = 4,
-	chars_per_line = 40,
-	entity_info = "standard"
-})
-
-* default def assumes a wallmounted sign with on-pole being allowed.
-
-*For signs that can support being on a pole, include in the def:
-	allow_onpole = true,
-	(defaults to disabled)
-
-*For signs that can support being on a horizontal pole, include in the def:
-	allow_onpole_horizontal = true,
-	(defaults to disabled)
-
-* onpole/onpole_horizontal are independent; one may be allowed without the other
-
-* "standard" entity info implies the standard wood/steel sign model, in
-  wallmounted mode.  For facedir signs using the standard model, use:
-
-	entity_info = {
-		mesh = "signs_lib_standard_wall_sign_entity.obj",
-		yaw = signs_lib.standard_yaw
-	},
-
-]]--
-
 function signs_lib.register_sign(name, rdef)
 	local def = table.copy(rdef)
 
