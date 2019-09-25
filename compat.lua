@@ -30,6 +30,7 @@ if minetest.get_modpath("prefab_redo") then
 			connect_left  = { -0.5,   -0.5, -0.125, 0.125, 0.375, 0.125 },
 			connect_back  = { -0.125, -0.5, -0.125, 0.125, 0.375, 0.5   },
 			connect_front = { -0.125, -0.5, -0.5,   0.125, 0.375, 0.125 },
+			disconnected  = { -0.125, -0.5, -0.125, 0.125, 0.25,  0.125 },
 			fixed = {}
 		}
 	})
