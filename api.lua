@@ -168,7 +168,12 @@ minetest.register_entity("signs_lib:text", {
 function signs_lib.delete_objects(pos)
 	local objects = minetest.get_objects_inside_radius(pos, 0.5)
 	for _, v in ipairs(objects) do
-		v:remove()
+		if v then
+			local e = v:get_luaentity()
+			if e and string.match(e.name, "sign.*text") then
+				v:remove()
+			end
+		end
 	end
 end
 
@@ -182,8 +187,17 @@ function signs_lib.spawn_entity(pos, texture)
 	local obj
 
 	if #objects > 0 then
-		obj = objects[1]
-	else
+		for _, v in ipairs(objects) do
+			if v then
+				local e = v:get_luaentity()
+				if e and e.name == "signs_lib:text" then
+					obj = v
+				end
+			end
+		end
+	end
+
+	if not obj then
 		obj = minetest.add_entity(pos, "signs_lib:text")
 	end
 
@@ -228,6 +242,14 @@ function signs_lib.spawn_entity(pos, texture)
 			})
 		end
 	end
+end
+
+function signs_lib.set_obj_text(pos, text)
+	local split = signs_lib.split_lines_and_words
+	local text_ansi = Utf8ToAnsi(text)
+	local n = minetest.registered_nodes[minetest.get_node(pos).name]
+	signs_lib.delete_objects(pos)
+	signs_lib.spawn_entity(pos, signs_lib.make_sign_texture(split(text_ansi), pos) )
 end
 
 -- rotation
@@ -288,7 +310,6 @@ function signs_lib.handle_rotation(pos, node, user, mode)
 		minetest.swap_node(tpos, { name = node.name, param2 = signs_lib.rotate_facedir[node.param2] or 0 })
 	end
 
-	signs_lib.delete_objects(tpos)
 	signs_lib.update_sign(tpos)
 	return true
 end
@@ -544,7 +565,7 @@ local function make_line_texture(line, lineno, pos, line_width, line_height, cwi
 	return table.concat(texture), lineno
 end
 
-local function make_sign_texture(lines, pos)
+function signs_lib.make_sign_texture(lines, pos)
 	local node = minetest.get_node(pos)
 	local meta = minetest.get_meta(pos)
 
@@ -596,14 +617,6 @@ function signs_lib.split_lines_and_words(text)
 		table.insert(lines, line:split(" "))
 	end
 	return lines
-end
-
-function signs_lib.set_obj_text(pos, text)
-	local split = signs_lib.split_lines_and_words
-	local text_ansi = Utf8ToAnsi(text)
-	local n = minetest.registered_nodes[minetest.get_node(pos).name]
-	signs_lib.delete_objects(pos)
-	signs_lib.spawn_entity(pos, make_sign_texture(split(text_ansi), pos))
 end
 
 function signs_lib.construct_sign(pos)
@@ -1045,7 +1058,6 @@ minetest.register_lbm({
 		minetest.swap_node(pos, {name = basename, param2 = node.param2})
 		local meta = minetest.get_meta(pos)
 		meta:set_int("widefont", 1)
-		signs_lib.delete_objects(pos)
 		signs_lib.update_sign(pos)
 	end
 })
