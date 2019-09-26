@@ -763,6 +763,10 @@ function signs_lib.check_for_pole(pos, pointed_thing)
 
 	if not pdef then return end
 
+	if signs_lib.check_for_ceiling(pointed_thing) or signs_lib.check_for_floor(pointed_thing) then
+		return false
+	end
+
 	if type(pdef.check_for_pole) == "function" then
 		local node = minetest.get_node(pos)
 		local def = minetest.registered_items[node.name]
@@ -781,6 +785,10 @@ function signs_lib.check_for_horizontal_pole(pos, pointed_thing)
 	local pdef = minetest.registered_items[pnode.name]
 
 	if not pdef then return end
+
+	if signs_lib.check_for_ceiling(pointed_thing) or signs_lib.check_for_floor(pointed_thing) then
+		return false
+	end
 
 	if type(pdef.check_for_horiz_pole) == "function" then
 		local node = minetest.get_node(pos)
