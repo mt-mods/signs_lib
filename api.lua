@@ -794,8 +794,6 @@ function signs_lib.check_for_horizontal_pole(pos, pointed_thing)
 		local node = minetest.get_node(pos)
 		local def = minetest.registered_items[node.name]
 		return pdef.check_for_horiz_pole(pos, node, def, ppos, pnode, pdef)
-	elseif pdef.check_for_horiz_pole then
-		return true
 	end
 end
 
