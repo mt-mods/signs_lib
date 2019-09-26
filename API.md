@@ -8,13 +8,13 @@ In this text, common terms such as `pos`, `node`, or `placer`/`digger` will not 
 
   To put it simply, where you'd have used `minetest.register_node()` before, just replace it with this call.  The syntax is identical, and in general, all settings/items allowed there are allowed here as well.  Anything that `signs_lib` doesn't need to override or alter will be passed straight through to `register_node()`, unchanged (such as `description`, `tiles`, or `inventory_image`).
 
-  The supplied `nodename` will be prepended with `":"`, so that any mod can register signs under any other mod's namespace, if desired.
+  The supplied node name will be prepended with ":", so that any mod can register signs under any other mod's namespace, if desired.
 
-  Many items have default settings applied when omitted, most of which would produce something equivalent to `"default:sign_wall_wood"` if enough other node defintion settings were to be included.
+  Many items have default settings applied when omitted, most of which would produce something equivalent to "default:sign_wall_wood" if enough other node defintion settings were to be included.
 
   * `drawtype = "string"`
 
-    Default: `"mesh"`
+    Default: "mesh"
 
   * `tiles = {table}`
 
@@ -29,17 +29,17 @@ In this text, common terms such as `pos`, `node`, or `placer`/`digger` will not 
 
   * `mesh = "string"`
 
-    Default: `"signs_lib_standard_wall_sign.obj"`.
+    Default: "signs_lib_standard_wall_sign.obj".
 
   * `paramtype = "string"`
 
-    Default: `"light"`
+    Default: "light"
 
   * `paramtype2 = "string"`
 
-    As with any other node, this determines how param2 is interpreted.  Since these are signs, only two modes make sense: `"wallmounted"` and `"facedir"`.  Any other string is the same as `"facedir"`.
+    As with any other node, this determines how param2 is interpreted.  Since these are signs, only two modes make sense: "wallmounted" and "facedir".  Any other string is the same as "facedir".
 
-    Default: `"wallmounted"`
+    Default: "wallmounted"
 
   * `wield_image = "string"`
 
@@ -54,8 +54,8 @@ In this text, common terms such as `pos`, `node`, or `placer`/`digger` will not 
 
     Sets the sign's groups, as usual.  In addition to whatever arbitrary groups you may have in mind, there are two presets available (both of which have `attached_node` removed, and `sign = 1` added):
 
-    * `signs_lib.standard_wood_groups`, inherited from `"default:sign_wall_wood"`
-    * `signs_lib.standard_steel_groups`, inherited from `"default:sign_wall_steel"`
+    * `signs_lib.standard_wood_groups`, inherited from "default:sign_wall_wood"
+    * `signs_lib.standard_steel_groups`, inherited from "default:sign_wall_steel"
 
     Default: `signs_lib.standard_wood_groups`
 
@@ -63,8 +63,8 @@ In this text, common terms such as `pos`, `node`, or `placer`/`digger` will not 
 
     Sets the sign's sound profile, as usual.  In addition to whatever sound profile you may have in mind, there are two presets available:
 
-    * `signs_lib.standard_wood_sign_sounds`, inherited from `"default:sign_wall_wood"`
-    * `signs_lib.standard_steel_sign_sounds`, inherited from `"default:sign_wall_steel"`
+    * `signs_lib.standard_wood_sign_sounds`, inherited from "default:sign_wall_wood"
+    * `signs_lib.standard_steel_sign_sounds`, inherited from "default:sign_wall_steel"
 
     Default: `signs_lib.standard_wood_sign_sounds`
 
@@ -114,7 +114,14 @@ In this text, common terms such as `pos`, `node`, or `placer`/`digger` will not 
 
     If your node needs a custom model for its on-pole, hanging, and/or yard variants, specify them here, as needed.  The materials and textures behave the same on these as on other sign models.  All sign model filenames are still derived from the base sign model, when not overridden here (so these can be totally arbitrary filenames).
 
-    Default: the normal "_onpole", "_hanging", or "_yard" version of the model specified by `mesh`.
+    Defaults: the normal "_onpole", "_hanging", or "_yard" version of the model specified by `mesh`.
+
+  * `selection_box = {table}`
+  * `node_box = {table}`
+
+  As usual, the former sets the sign's selection box, while the latter sets its collision information (since signs use model meshes).  At the very least, you'll want to specify `selection_box`.  If the sign node is in "wallmounted" mode, this must contain proper `wall_top`, `wall_side`, and `wall_bottom` entries, as one normally uses with such nodes.  Signs that use "facedir" mode just need the usual `fixed` setting.
+
+  Defaults:  `selection_box` is a box that fits the standard wall sign, if not specified.  `node_box` takes on the value given to `selection_box`, if not specified (or the standard wall sign setting, if neither is present).
 
   * `onpole_selection_box = {table}`
   * `hanging_selection_box = {table}`
@@ -125,11 +132,13 @@ In this text, common terms such as `pos`, `node`, or `placer`/`digger` will not 
 
     If your node needs special handling for its onpole-, hanging-, or yard-mode selection boxes or for their collision info (which `signs_lib` always uses the node's `node_box` item for), you can specify them here.  Same syntax as the regular `selection_box` setting.
 
+    Defaults:  whatever the `selection_box` and `node_box` entries are set to.
+
   * `default_color = "string"`
 
-    Sets the default text color for this sign, in hexadecimal (`0-9`, `a-f`), from the standard Linux/IRC/CGA color palette.  Same as the colors shown in the sign's formspec.
+    Sets the default text color for this sign, in hexadecimal (one digit, lowercase), from the standard Linux/IRC/CGA color palette.  Same as the colors shown in the sign's formspec.
 
-    Default: `"0"` (black)
+    Default: "0" (black)
 
   * `number_of_lines = int`
 
@@ -138,16 +147,11 @@ In this text, common terms such as `pos`, `node`, or `placer`/`digger` will not 
     Default: 6
 
   * `horiz_scaling = float`
-
-    Scaling factor applied to the entity texture horizontal resolution.  Larger values increase the resolution.  Since a given sign's entity is always displayed at a fixed visual scale, increasing this setting squeezes more pixels into the same horizontal space, making the text appear narrower.
-
-    Default: 1.0
-
   * `vert_scaling = float`
 
-    Scaling factor applied to the entity texture's vertical resolution.  Larger values increase the resolution, making the text appear shorter, and increasing the number of lines the sign can display.
+    Scaling factor applied to the entity texture horizontal or vertical resolution.  Larger values increase the resolution.  Since a given sign's entity is always displayed at a fixed visual scale, increasing these squeezes more pixels into the same space, making the text appear narrower or shorter.  Increasing `vert_scaling` also increases the number of lines of text the sign will hold.
 
-    Default: 1.0
+    Defaults: 1.0 for both
 
   * `line_spacing = int`
 
@@ -162,16 +166,11 @@ In this text, common terms such as `pos`, `node`, or `placer`/`digger` will not 
     Default: 15
 
   * `x_offset = int`
-
-    Starting X position in pixels, relative to the text entity UV map left edge.
-
-    Default: 4
-
   * `y_offset = int`
 
-    Starting Y position in pixels, relative to the text entity UV map top edge.
+    Starting X and Y position in pixels, relative to the text entity UV map upper-left corner.
 
-    Default: 0
+    Defaults: 4 for X, 0 for Y
 
   * `chars_per_line = int`
 
@@ -183,7 +182,7 @@ In this text, common terms such as `pos`, `node`, or `placer`/`digger` will not 
 
     Describes the entity model and yaw table to use.  May be one of:
 
-    * A table specifying the two directly, such as:
+    * A table specifying the two settings directly, such as:
 
         ```lua
         entity_info = {
@@ -193,51 +192,48 @@ In this text, common terms such as `pos`, `node`, or `placer`/`digger` will not 
         ```
       * `signs_lib.standard_yaw` is also available as a yaw preset, if desired.
 
-    * `"standard"`: just use the standard wood/steel sign model, in wallmounted mode.  Equivalent to the example above.
-    * If this item is `nil`/not set, the sign will not have a formspec, basically all text-related settings will be ignored and/or omitted entirely, and no entity will be spawned for this sign, thus the sign will not be writable.  This is the default, and is of course what one would want for any sign that's just an image wrapped around a model, as in most of the signs in [my street signs mod](https://forum.minetest.net/viewtopic.php?t=20866).
+    * a string reading "standard", which tells `signs_lib` to use the standard wood/steel sign model, in wallmounted mode.  Equivalent to the example above.
+    * nothing at all: if omitted, the sign will not have a formspec, basically all text-related settings will be ignored and/or omitted entirely, and no entity will be spawned for this sign, thus the sign will not be writable.  This is the default, and is of course what one would want for any sign that's just an image wrapped around a model, as in most of the signs in [my street signs mod](https://forum.minetest.net/viewtopic.php?t=20866).
+
+    Default:  **nil**
 
   * `allow_hanging = bool`
-
-    If `true`, allow the registration function to create a "hanging from the ceiling" version of the initial, base sign node.  Its name will be the same as the base node name, with "_wall" deleted from the name (if present), and "_hanging" appended.  For example, "default:sign_wall_wood" becomes "default:sign_wood_hanging".
-
-    Default: `nil`
-
   * `allow_onpole = bool`
-
-    Allow creation of an on-pole variant of the base sign, named the same as the base sign, with "_wall" deleted and "_onpole" appended.  Example: "default:sign_wall_wood" becomes "default:sign_wood_onpole"
-
-    Default: `nil`
-
   * `allow_onpole_horizontal = bool`
-
-    Allow creation of an on-horizontal-pole variant.  This flag is independent of `allow_onpole`; the mod may specify either or both.  Its name will be the base node name, with "_wall" deleted and "_onpole_horiz" appended.  Example:  "default:sign_wall_wood" becomes "default:sign_wood_onpole_horiz".
-
-    Default: `nil`
-
   * `allow_yard = bool`
 
-    Allow creation of a yard sign variant, named the same as the base sign, with "_wall" deleted and "_yard" appended.  Example: "default:sign_wall_wood" becomes "default:sign_wood_yard"
+
+    If **true**, these allow the registration function to create versions of the initial, base sign node that either hang from the ceiling, are mounted on a vertical pole/post, are mounted on a horizontal pole, or are free-standing, on a small stick.  Their node names will be the same as the base wall sign node, except with "_hanging", "_onpole", "_onpole_horiz", or "_yard", respectively, appended to the end of the node name.  If the base node name has "_wall" in it, that bit is deleted before appending the above.
+
+    These options are independent of one another.
+
+    Defaults: all **nil**
 
   * `allow_widefont = bool`
 
     Just what it says on the tin.  If enabled, the formspec will have a little "on/off switch" left of the "Write" button, to select the font width.
 
-    Default: `nil`
+    Default: **nil**
 
   * `locked = bool`
 
     Sets this sign to be locked/owned, like the original default steel wall sign.
 
-    Default: `nil`
+    Default: **nil**
 
 ### Example sign definition:
 
 ```lua
 signs_lib.register_sign("basic_signs:sign_wall_glass", {
 	description = S("Glass Sign"),
+	yard_mesh = "signs_lib_standard_sign_yard_two_sticks.obj",
 	tiles = {
 		{ name = "basic_signs_sign_wall_glass.png", backface_culling = true},
 		"basic_signs_sign_wall_glass_edges.png",
+		"basic_signs_pole_mount_glass.png",
+		nil,
+		nil,
+		"default_steel_block.png" -- the sticks on back of the yard sign model
 	},
 	inventory_image = "basic_signs_sign_wall_glass_inv.png",
 	default_color = "c",
@@ -249,6 +245,7 @@ signs_lib.register_sign("basic_signs:sign_wall_glass", {
 	allow_widefont = true,
 	allow_onpole = true,
 	allow_onpole_horizontal = true,
+	allow_yard = true,
 	use_texture_alpha = true,
 })
 ```
@@ -259,7 +256,7 @@ signs_lib.register_sign("basic_signs:sign_wall_glass", {
 
   Determines if the `pointed_thing` is a wall, floor, ceiling, or pole/post, and swaps the placed sign for the correct model.
 
-  * `locked`: if set to true, the sign's meta will be tweaked to indicate its ownership by the `placer`.
+  * `locked`: if set to **true**, the sign's meta will be tweaked to indicate its ownership by the `placer`.
 
 * `signs_lib.construct_sign(pos)`
 
@@ -275,11 +272,11 @@ signs_lib.register_sign("basic_signs:sign_wall_glass", {
 
 * `signs_lib.update_sign(pos, fields)`
 
-  If the sign's writable, this deletes any entities in the sign's node space, spawns a new one, and renders whatever text is in the sign's meta.
+  If the sign's writable, this deletes any sign-related entities in the sign's node space, spawns a new one, and renders whatever text is in the sign's meta.
 
 * `signs_lib.can_modify(pos, player)`
 
-  Returns `true` if the player is allowed to dig, edit, or change the font width of the sign.
+  Returns **true** if the player is allowed to dig, edit, or change the font width of the sign.
 
 * `signs_lib.handle_rotation(pos, node, player, mode)`
 
@@ -287,13 +284,13 @@ signs_lib.register_sign("basic_signs:sign_wall_glass", {
 
   * `mode`: the screwdriver's mode, as passed from the screwdriver mod.
 
-  Returns `false` if the user tried to right-click with the screwdriver, `true` otherwise.
+  Returns **false** if the user tried to right-click with the screwdriver, **true** otherwise.
 
 * `signs_lib.make_selection_boxes(x_size, y_size, foo, x_offset, y_offset, z_offset, is_facedir)`
 
-  * `x_size`/`y_size`: dimensions in inches.  One node is 39.37 inches on a side.  This function uses inches instead of metric because it started out as a selection box maker for MUTCD-compliant signs, which are measured in inches.
+  * `x_size`/`y_size`: dimensions in inches.  One node is 39.37 inches on a side.  This function uses inches instead of metric because it started out as a selection box maker for [MUTCD-2009](https://mutcd.fhwa.dot.gov/pdfs/2009r1r2/mutcd2009r1r2edition.pdf)-compliant signs, which are measured in inches.
   * `x_offset`/`y_offset`/`z_offset`: shift the selection box (inches, defaults to centered, with the back face flush with the back of the node).
-  * `is_facedir`: if unset, the selection boxes will be created with the assumption that `paramtype2 = "wallmounted"` mode is set.  Any other value creates a selection box for "facedir" mode.
+  * `is_facedir`: if unset, the selection boxes will be created with the assumption that `paramtype2 = "wallmounted"` mode is set on the node the box will be used on.  Any other value creates a selection box for "facedir" mode.
   * `foo` is ignored (leftover from an argument that's long since been rendered obsolete.
 
   Returns a table suitable for the `selection_box` node definition entry.
@@ -324,21 +321,21 @@ You probably won't need to call any of these directly.
 
   Attempts to determine if the `pointed_thing` qualifies as a vertical pole or post of some kind.
 
-  Returns `true` if a suitable pole/post is found
+  Returns **true** if a suitable pole/post is found
 
 * `signs_lib.check_for_horizontal_pole(pos, pointed_thing)`
 
   Same idea, but for horizontal poles/posts.
 
-  Returns `true` if a suitable pole/post is found.
+  Returns **true** if a suitable pole/post is found.
 
 * `signs_lib.check_for_ceiling(pointed_thing)`
 
-  Returns `true` if the `pointed_thing` appears to be the bottom of a node.
+  Returns **true** if the `pointed_thing` appears to be the bottom of a node.
 
 * `signs_lib.check_for_floor(pointed_thing)`
 
-  Returns `true` if the `pointed_thing` appears to be the top of a node.
+  Returns **true** if the `pointed_thing` appears to be the top of a node.
 
 * `signs_lib.set_obj_text(pos, text)`
 
@@ -359,7 +356,7 @@ Supplying one or both of the following in the pole/post node's definition will c
     * `pole_node`: the target node itself
     * `pole_def`: its node definition
 
-    Your code must return `true` if the sign should attach to the target node.
+    Your code must return **true** if the sign should attach to the target node.
 
     If desired, this entry may simply be set to `check_for_pole = true` if a sign can always attach to this node regardless of facing direction (for example, [Home Decor](https://forum.minetest.net/viewtopic.php?pid=26061) has a round brass pole/post, which always stands vertical, and [Cottages](https://forum.minetest.net/viewtopic.php?id=5120) has a simple table that's basically a fencepost with a platform on top).
 
@@ -367,4 +364,4 @@ Supplying one or both of the following in the pole/post node's definition will c
 
     If supplied, this does the same thing for horizontal poles.
 
-    Your code must return `true` if the sign should attach to the target node.
+    Your code must return **true** if the sign should attach to the target node.

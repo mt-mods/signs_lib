@@ -2,37 +2,37 @@
 
 In the model files:
 
-* The base sign model should be designed to look like a flat board placed on one side of the node space.  The first material entry in the model file must be assigned to the front and back faces of the sign, the second material must be the sign's edges.  The filename should be something along the lines of `mymod_my_cool_sign_wall.obj`.
+* The base sign model should be designed to look like a flat board placed on one side of the node space.  The first material entry in the model file must be assigned to the front and back faces of the sign, the second material must be the sign's edges.  The filename should be something along the lines of "mymod_my_cool_sign_wall.obj".
 
   In each of the variants below, generally-speaking, the third material in the model must be assigned to whatever it is that that model uses for the sign's mounting method, and the mounting style will be the last word in the model filename.
 
-* For most signs that are allowed to sit on a vertical pole/post such as a fencepost, the pole-mounted model is just a copy of the base model, shifted back a bit, with a pole mount added to the back.  In these models, the third material in the model file must be assigned to the pole mount.  Name the model file the same as the base sign, but end the name with `_onpole` instead of `_wall`.  For example, `mymod_my_cool_sign_onpole.obj`.
+* For most signs that are allowed to sit on a vertical pole/post such as a fencepost, the pole-mounted model is just a copy of the base model, shifted back a bit, with a pole mount added to the back.  In these models, the third material in the model file must be assigned to the pole mount.  Name the model file the same as the base sign, but end the name with "_onpole" instead of "_wall".  For example, "mymod_my_cool_sign_onpole.obj".
 
   For signs that allow mounting onto a horizontal pole (such as a Streets mod horizontal "bigpole"), the third material is still the vertical pole mount as above, but there must also be another the pole mount included, designed to wrap around such a pole/post, to which fourth material must be assigned.  In most cases, this alternate mount will just be a copy of the vertical pole mount, but rotated by 90°, and explicitly centered vertically in the node space.
 
   While vertical and horizontal pole/post mounting options are independent in the code, if horizontal mounting is enabled, the on-pole model must still have *four* materials, even if the third material is unused, with the horizontal pole mount assigned to the fourth material.  In most situations, you'll probably have both vertical and horizontal pole mounts assigned to the third and fourth materials, as above.
 
-* For hanging sign models, the third material must be assigned to whatever it is that makes the sign look like it's hanging from the ceiling (default signs have a simple, flat rectangle, meant to show an image of a simple pair of chains).  The model file for these must be named the same as the base model, but ending with `_hanging`.  For example, `mymod_my_cool_sign_hanging.obj`.
+* For hanging sign models, the third material must be assigned to whatever it is that makes the sign look like it's hanging from the ceiling (default signs have a simple, flat rectangle, meant to show an image of a simple pair of chains).  The model file for these must be named the same as the base model, but ending with "_hanging".  For example, "mymod_my_cool_sign_hanging.obj".
 
-* For yard sign models, the third material must be assigned to to the "stick" on the back of the sign that hold it up.  The model for this type must be named the same as the base model, but ending with `_yard`.  For example, `mymod_my_cool_sign_yard.obj`.
+* For yard sign models, the third material must be assigned to the "stick" on the back of the sign.  The model for this type must be named the same as the base model, but ending with "_yard".  For example, "mymod_my_cool_sign_yard.obj".
 
 * For most signs, the sign entity (if applicable) will be a simple rectangle, sized just slightly smaller than the width and height of the sign, and centered relative to the sign face.  Its UV map should cover the entire image area, so that the image is shrunk down to fit within the sign's intended text area.  The rectangle must be positioned slightly in front of the sign (by 10 millimeters or so, due to engine position precision limitations).
 
-  The entity should be named the same as the corresponding wall, on-pole, hanging, and/or yard models, but with "_entity" added just before the mounting style.  For example:  a sign using `mymod_my_cool_sign_wall.obj` for the base model file should have an entity model file named `mymod_my_cool_sign_entity_wall.obj`.
+  The entity should be named the same as the corresponding wall, on-pole, hanging, and/or yard models, but with "_entity" added just before the mounting style.  For example:  a sign using "mymod_my_cool_sign_wall.obj" for the base model file should have an entity model file named "mymod_my_cool_sign_entity_wall.obj", if one will be needed.
 
 In your code:
 
 * The first `tiles{}` entry in the sign definition needs to be the front-back texture (how things are arranged within the image file is up to you, provided you match your sign model's UV map to the layout of your image).  The second entry will be the texture for the sign's edges.
 
-* For signs that can be mounted on a pole/post, the third `tiles{}` specifies the pole mount image to use.  When `signs_lib` goes to register the on-pole version of the base sign, it will rewrite the third and fourth `tiles{}` entries internally.  one will be set to the texture you supplied, the other will be set to the standard empty image.  Which one it sets to the pole mount texture is what controls whether the vertical or horizontal mount is visible.  If you don't specify a pole mount image in the third `tiles{}` entry, `signs_lib` will use its standard pole mount texture.
+* For signs that can be mounted on a pole/post, the third item in your `tiles{}` setting specifies the pole mount image to use.  When `signs_lib` goes to register the on-pole node(s), the image you specified here will be passed to `register_node()` as either the third or *fourth* tile item, setting the other to the standard blank/empty image, thus revealing only the vertical or horizontal pole mount, respectively.  If you don't specify a pole mount image, the standard pole mount texture will be used instead, if needed.
 
-* For signs that can hang from a ceiling, the fourth `tiles{}` entry specifies the image to apply to the part of the model that makes it look like it's hanging.  If this entry is not set, `signs_lib` will use its standard hanging chains image.
+* For signs that can hang from a ceiling, the fourth entry in your `tiles{}` setting specifies the image to apply to the part of the model that makes it look like it's hanging.  If not specified, the standard hanging chains image will be used instead, if needed.
 
-* For signs that can stand up in the yard, the fifth `tiles{}` entry specifies the image to be wrapped around the "stick" that the sign's mounted on.  If not set, it will default to "default_wood.png".
+* For signs that can stand up in the yard, the fifth `tiles{}` entry specifies the image to be wrapped around the "stick" that the sign's mounted on.  If not specified, "default_wood.png" will be used instead, if needed.
 
 * Some signs may allow for more complex entity shapes, images, and UV mapping.  For example, [street_signs](https://forum.minetest.net/viewtopic.php?t=20866) has a standard city street intersection sign, the entity mesh for which consists of four simple rectangles.  Two of them are identically UV-mapped to the top portion of the texture image, and placed on either side of the upper half of the sign portion of the model.  The other two rectangles are also identically UV-mapped, but point to a lower section of the texture, and are rotated by 90° and shifted down in the model, to place them on either side of the lower half of the sign.  This causes the first line of text to appear on both sides of the upper half of the sign, with the second line of text appearing on both sides of the lower half.
 
-  Signs which don't use the simple models described above may not be compatible with the wall, ceiling, floor, or pole/post placement paradigm, but these things can be overridden/disabled in the node definition, if needed (as with the above intersection sign).
+  Signs which don't use the simple models described above may not be compatible with the wall/pole/ceiling/yard placement code, but these things can be overridden/disabled in the node definition, if needed (as with the above intersection sign).
 
 * `signs_lib` automatically blanks-out all redundant `tiles{}` entries for each node.
 
@@ -50,7 +50,7 @@ For signs that will use "facedir" mode, the sign must be upright, with its back 
 
 When adding materials, you MUST add them in the order you want them to appear in the exported model, as Blender provides no easy way to enforce a particular order if they come out wrong.
 
-If you look in the `models/` directory, you'll find the standard sign project file, `standard wooden sign.blend`, which contains all four variants of the standard sign model ("wallmounted" and "facedir", on-wall and on-pole), designed per the above requirements.  This file also contains both entity variants (on-wall and on-pole).  You'll notice that there are only two entities. This is because entity rotation has no relation to a node's `paramtype2`, so all standard signs use the same pair of upright on-wall and on-pole entities.
+If you look in the `models/` directory, you'll find the standard sign project file, "standard wooden sign.blend", which contains all four variants of the standard sign model ("wallmounted" and "facedir", on-wall and on-pole), designed per the above requirements.  This file also contains both entity variants (on-wall and on-pole).  You'll notice that there are only two entities. This is because entity rotation has no concept of "wallmounted", "facedir", etc., so all standard signs use the same pair of entities.
 
 To create the text entity model, assuming you're starting with a properly-UV-mapped, "wallmounted" base sign model with a simple one-piece flat design (comparable to, say, a standard wall sign or a [street_signs](https://forum.minetest.net/viewtopic.php?t=20866) warning diamond), do these steps:
 

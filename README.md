@@ -16,13 +16,13 @@ That said, there are some basic text formatting options:
 
 * Paragraph breaks (blank lines) may be inserted by simply hitting `Enter` twice.
 
-* Eight arrow symbols are available, occupying positions 0x81 through 0x88 in the character set.  These are produced by writing a `^` followed by a number `1-8`:
+* Eight arrow symbols are available, occupying positions 0x81 through 0x88 in the character set.  These are produced by writing a "^" followed by a number 1 to 8:
 
-  `^1` = `⬆`, `^2` = `⬈`, `^3` = `➡`, `^4` = `⬊`, `^5` = `⬇`, `^6` = `⬋`, `^7` = `⬅`, `^8` = `⬉`
+  "^1" = `⬆`, "^2" = `⬈`, "^3" = `➡`, "^4" = `⬊`, "^5" = `⬇`, "^6" = `⬋`, "^7" = `⬅`, "^8" = `⬉`
 
-  Writing `^` followed by a letter `a-h` will produce double-wide versions of these arrows, in the same order.  These wide arrows occupy 0x89 to 0x91 in the character set.
+  Writing "^" followed by a letter "a" through "h" will produce double-wide versions of these arrows, in the same order.  These wide arrows occupy 0x89 to 0x91 in the character set.
 
-* A color may be specified in the sign text by using `#` followed by a single hexadcimal digit (`0-9` or `a-f`).  These colors come from the standard Linux/IRC/CGA color set, and are shown in the sign's formspec.  Any color change will remain in effect until changed again, or until the next line break.  Any number of color changes in any arbitrary arrangement is allowed.
+* A color may be specified in the sign text by using "#" followed by a single hexadcimal digit (0-9 or a-f).  These colors come from the standard Linux/IRC/CGA color set, and are shown in the sign's formspec.  Any color change will remain in effect until changed again, or until the next line break.  Any number of color changes in any arbitrary arrangement is allowed.
 
 ## Sign placement and rotation notes
 
@@ -38,7 +38,7 @@ That said, there are some basic text formatting options:
 
 * Pointing at an X or Z side of something that's detected as a pole/post will mount the sign onto that pole.  Note that the sign actually occupies the node space in front of the pole, since they're still separate nodes.  But, I figure, no one's going to want to use the space in front of the sign anyway, because doing so would of course obscure the sign, so it doesn't matter if the sign logically occupies that node space.
 
-* If you're holding "Sneak" (usually shift) while placing, the on-pole/hanging/yard checks are skipped, allowing you to just place a sign flat onto the ground, ceiling, or top/bottom of a pole/post, like they used to work before `signs_lib` was a thing.
+* If you're holding the "Sneak" key (usually `Shift`) while placing, the on-pole/hanging/yard checks are skipped, allowing you to just place a sign flat onto the ground, ceiling, or top/bottom of a pole/post, like they used to work before `signs_lib` was a thing.
 
 * If a sign is on the wall or flat on the ground, the screwdriver will spin it from one wall to the next, in clockwise order, whether there's a wall to attach to or not, followed by putting it flat on the ground, then flat against the ceiling, then back to wall orientation.
 
