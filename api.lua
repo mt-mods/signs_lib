@@ -809,11 +809,15 @@ end
 
 function signs_lib.after_place_node(pos, placer, itemstack, pointed_thing, locked)
 	local playername = placer:get_player_name()
-	local def = minetest.registered_items[itemstack:get_name()]
+	local signname = itemstack:get_name()
+	local no_wall_name = string.gsub(signname, "_wall", "")
+
+	local def = minetest.registered_items[signname]
 
 	local ppos = minetest.get_pointed_thing_position(pointed_thing)
 	local pnode = minetest.get_node(ppos)
 	local pdef = minetest.registered_items[pnode.name]
+
 	if def.allow_onpole and signs_lib.check_for_pole(pos, pointed_thing) then
 		local newparam2
 		local lookdir = minetest.yaw_to_dir(placer:get_look_horizontal())
@@ -823,7 +827,7 @@ function signs_lib.after_place_node(pos, placer, itemstack, pointed_thing, locke
 			newparam2 = minetest.dir_to_facedir(lookdir)
 		end
 		local node = minetest.get_node(pos)
-		minetest.swap_node(pos, {name = itemstack:get_name().."_onpole", param2 = newparam2})
+		minetest.swap_node(pos, {name = no_wall_name.."_onpole", param2 = newparam2})
 	elseif def.allow_onpole_horizontal and signs_lib.check_for_horizontal_pole(pos, pointed_thing) then
 		local newparam2
 		local lookdir = minetest.yaw_to_dir(placer:get_look_horizontal())
@@ -833,15 +837,19 @@ function signs_lib.after_place_node(pos, placer, itemstack, pointed_thing, locke
 			newparam2 = minetest.dir_to_facedir(lookdir)
 		end
 		local node = minetest.get_node(pos)
-		minetest.swap_node(pos, {name = itemstack:get_name().."_onpole_horiz", param2 = newparam2})
+		minetest.swap_node(pos, {name = no_wall_name.."_onpole_horiz", param2 = newparam2})
 	elseif def.allow_hanging and signs_lib.check_for_ceiling(pointed_thing) then
 		local newparam2 = minetest.dir_to_facedir(placer:get_look_dir())
 		local node = minetest.get_node(pos)
-		minetest.swap_node(pos, {name = itemstack:get_name().."_hanging", param2 = newparam2})
+		minetest.swap_node(pos, {name = no_wall_name.."_hanging", param2 = newparam2})
+	elseif def.allow_yard and signs_lib.check_for_floor(pointed_thing) then
+ 		local newparam2 = minetest.dir_to_facedir(placer:get_look_dir())
+		local node = minetest.get_node(pos)
+		minetest.swap_node(pos, {name = no_wall_name.."_yard", param2 = newparam2})
 	elseif def.paramtype2 == "facedir" and signs_lib.check_for_ceiling(pointed_thing) then
-		minetest.swap_node(pos, {name = itemstack:get_name(), param2 = 6})
+		minetest.swap_node(pos, {name = signname, param2 = 6})
 	elseif def.paramtype2 == "facedir" and signs_lib.check_for_floor(pointed_thing) then
-		minetest.swap_node(pos, {name = itemstack:get_name(), param2 = 4})
+		minetest.swap_node(pos, {name = signname, param2 = 4})
 	end
 	if locked then
 		local meta = minetest.get_meta(pos)
@@ -854,149 +862,194 @@ function signs_lib.register_fence_with_sign()
 	minetest.log("warning", "[signs_lib] ".."Attempt to call no longer used function signs_lib.register_fence_with_sign()")
 end
 
-function signs_lib.register_sign(name, rdef)
-	local def = table.copy(rdef)
+function signs_lib.register_sign(name, raw_def)
+	local def = table.copy(raw_def)
 
-	if rdef.entity_info == "standard" then
+	if raw_def.entity_info == "standard" then
 		def.entity_info = {
-			mesh = "signs_lib_standard_wall_sign_entity.obj",
+			mesh = "signs_lib_standard_sign_entity_wall.obj",
 			yaw = signs_lib.wallmounted_yaw
 		}
-	elseif rdef.entity_info then
-		def.entity_info = rdef.entity_info
+	elseif raw_def.entity_info then
+		def.entity_info = raw_def.entity_info
 	end
 
-	def.after_place_node = rdef.after_place_node or signs_lib.after_place_node
+	def.after_place_node = raw_def.after_place_node or signs_lib.after_place_node
 
-	if rdef.entity_info then
-		def.on_rightclick       = rdef.on_rightclick       or signs_lib.construct_sign
-		def.on_construct        = rdef.on_construct        or signs_lib.construct_sign
-		def.on_destruct         = rdef.on_destruct         or signs_lib.destruct_sign
-		def.on_receive_fields   = rdef.on_receive_fields   or signs_lib.receive_fields
-		def.on_punch            = rdef.on_punch            or signs_lib.update_sign
-		def.number_of_lines     = rdef.number_of_lines     or signs_lib.standard_lines
-		def.horiz_scaling       = rdef.horiz_scaling       or signs_lib.standard_hscale
-		def.vert_scaling        = rdef.vert_scaling        or signs_lib.standard_vscale
-		def.line_spacing        = rdef.line_spacing        or signs_lib.standard_lspace
-		def.font_size           = rdef.font_size           or signs_lib.standard_fsize
-		def.x_offset            = rdef.x_offset            or signs_lib.standard_xoffs
-		def.y_offset            = rdef.y_offset            or signs_lib.standard_yoffs
-		def.chars_per_line      = rdef.chars_per_line      or signs_lib.standard_cpl
-		def.default_color       = rdef.default_color       or "0"
-		if rdef.locked and not rdef.after_place_node then
+	if raw_def.entity_info then
+		def.on_rightclick       = raw_def.on_rightclick       or signs_lib.construct_sign
+		def.on_construct        = raw_def.on_construct        or signs_lib.construct_sign
+		def.on_destruct         = raw_def.on_destruct         or signs_lib.destruct_sign
+		def.on_receive_fields   = raw_def.on_receive_fields   or signs_lib.receive_fields
+		def.on_punch            = raw_def.on_punch            or signs_lib.update_sign
+		def.number_of_lines     = raw_def.number_of_lines     or signs_lib.standard_lines
+		def.horiz_scaling       = raw_def.horiz_scaling       or signs_lib.standard_hscale
+		def.vert_scaling        = raw_def.vert_scaling        or signs_lib.standard_vscale
+		def.line_spacing        = raw_def.line_spacing        or signs_lib.standard_lspace
+		def.font_size           = raw_def.font_size           or signs_lib.standard_fsize
+		def.x_offset            = raw_def.x_offset            or signs_lib.standard_xoffs
+		def.y_offset            = raw_def.y_offset            or signs_lib.standard_yoffs
+		def.chars_per_line      = raw_def.chars_per_line      or signs_lib.standard_cpl
+		def.default_color       = raw_def.default_color       or "0"
+		if raw_def.locked and not raw_def.after_place_node then
 			def.after_place_node = function(pos, placer, itemstack, pointed_thing)
 				signs_lib.after_place_node(pos, placer, itemstack, pointed_thing, true)
 			end
 		end
 	end
 
-	def.paramtype           = rdef.paramtype           or "light"
-	def.drawtype            = rdef.drawtype            or "mesh"
-	def.mesh                = rdef.mesh                or "signs_lib_standard_wall_sign.obj"
-	def.wield_image         = rdef.wield_image         or def.inventory_image
-	def.drop                = rdef.drop                or name
-	def.sounds              = rdef.sounds              or signs_lib.standard_wood_sign_sounds
-	def.paramtype2          = rdef.paramtype2          or "wallmounted"
-	def.on_rotate           = rdef.on_rotate           or signs_lib.handle_rotation
+	def.paramtype           = raw_def.paramtype           or "light"
+	def.drawtype            = raw_def.drawtype            or "mesh"
+	def.mesh                = raw_def.mesh                or "signs_lib_standard_sign_wall.obj"
+	def.wield_image         = raw_def.wield_image         or def.inventory_image
+	def.drop                = raw_def.drop                or name
+	def.sounds              = raw_def.sounds              or signs_lib.standard_wood_sign_sounds
+	def.paramtype2          = raw_def.paramtype2          or "wallmounted"
+	def.on_rotate           = raw_def.on_rotate           or signs_lib.handle_rotation
 
-	if rdef.groups then
-		def.groups = rdef.groups
+	if raw_def.groups then
+		def.groups = raw_def.groups
 	else
 		def.groups = signs_lib.standard_wood_groups
 	end
 
 	local cbox = signs_lib.make_selection_boxes(35, 25)
 
-	def.selection_box = rdef.selection_box or cbox
-	def.node_box      = table.copy(rdef.node_box or rdef.selection_box or cbox)
+	def.selection_box = raw_def.selection_box or cbox
+	def.node_box      = table.copy(raw_def.node_box or raw_def.selection_box or cbox)
 
 	if def.sunlight_propagates ~= false then
 		def.sunlight_propagates = true
 	end
 
+	def.tiles[3] = "signs_lib_blank.png"
+	def.tiles[4] = "signs_lib_blank.png"
+	def.tiles[5] = "signs_lib_blank.png"
+	def.tiles[6] = "signs_lib_blank.png"
+
 	minetest.register_node(":"..name, def)
 	table.insert(signs_lib.lbm_restore_nodes, name)
 
-	local opdef = table.copy(def)
+	local no_wall_name = string.gsub(name, "_wall", "")
 
-	if rdef.allow_onpole or rdef.allow_onpole_horizontal then
+	local othermounts_def = table.copy(def)
+
+	if raw_def.allow_onpole or raw_def.allow_onpole_horizontal then
 
 		local offset = 0.3125
-		if opdef.uses_slim_pole_mount then
+		if othermounts_def.uses_slim_pole_mount then
 			offset = 0.35
 		end
 
-		opdef.selection_box = rdef.onpole_selection_box or opdef.selection_box
-		opdef.node_box = rdef.onpole_node_box or opdef.selection_box
+		othermounts_def.selection_box = raw_def.onpole_selection_box or othermounts_def.selection_box
+		othermounts_def.node_box = raw_def.onpole_node_box or othermounts_def.selection_box
 
-		if opdef.paramtype2 == "wallmounted" then
-			opdef.node_box.wall_side[1] = def.node_box.wall_side[1] - offset
-			opdef.node_box.wall_side[4] = def.node_box.wall_side[4] - offset
+		if othermounts_def.paramtype2 == "wallmounted" then
+			othermounts_def.node_box.wall_side[1] = def.node_box.wall_side[1] - offset
+			othermounts_def.node_box.wall_side[4] = def.node_box.wall_side[4] - offset
 
-			opdef.selection_box.wall_side[1] = def.selection_box.wall_side[1] - offset
-			opdef.selection_box.wall_side[4] = def.selection_box.wall_side[4] - offset
+			othermounts_def.selection_box.wall_side[1] = def.selection_box.wall_side[1] - offset
+			othermounts_def.selection_box.wall_side[4] = def.selection_box.wall_side[4] - offset
 		else
-			opdef.node_box.fixed[3] = def.node_box.fixed[3] + offset
-			opdef.node_box.fixed[6] = def.node_box.fixed[6] + offset
+			othermounts_def.node_box.fixed[3] = def.node_box.fixed[3] + offset
+			othermounts_def.node_box.fixed[6] = def.node_box.fixed[6] + offset
 
-			opdef.selection_box.fixed[3] = def.selection_box.fixed[3] + offset
-			opdef.selection_box.fixed[6] = def.selection_box.fixed[6] + offset
+			othermounts_def.selection_box.fixed[3] = def.selection_box.fixed[3] + offset
+			othermounts_def.selection_box.fixed[6] = def.selection_box.fixed[6] + offset
 		end
 
-		opdef.groups.not_in_creative_inventory = 1
-		opdef.mesh = string.gsub(opdef.mesh, ".obj$", "_onpole.obj")
+		othermounts_def.groups.not_in_creative_inventory = 1
+		othermounts_def.mesh = raw_def.onpole_mesh or string.gsub(othermounts_def.mesh, "wall.obj$", "onpole.obj")
 
-		if opdef.entity_info then
-			opdef.entity_info.mesh = string.gsub(opdef.entity_info.mesh, ".obj$", "_onpole.obj")
+		if othermounts_def.entity_info then
+			othermounts_def.entity_info.mesh = string.gsub(othermounts_def.entity_info.mesh, "entity_wall.obj$", "entity_onpole.obj")
 		end
 	end
 
 	-- setting one of item 3 or 4 to a texture and leaving the other "blank",
 	-- reveals either the vertical or horizontal pole mount part of the model
 
-	if rdef.allow_onpole then
-		opdef.tiles[3] = "signs_lib_pole_mount.png"
-		opdef.tiles[4] = "signs_lib_blank.png"
-		minetest.register_node(":"..name.."_onpole", opdef)
-		table.insert(signs_lib.lbm_restore_nodes, name.."_onpole")
+	if raw_def.allow_onpole then
+		othermounts_def.tiles[3] = raw_def.tiles[3] or "signs_lib_pole_mount.png"
+		othermounts_def.tiles[4] = "signs_lib_blank.png"
+		othermounts_def.tiles[5] = "signs_lib_blank.png"
+		othermounts_def.tiles[6] = "signs_lib_blank.png"
+
+		minetest.register_node(":"..no_wall_name.."_onpole", othermounts_def)
+		table.insert(signs_lib.lbm_restore_nodes, no_wall_name.."_onpole")
 	end
 
-	local ophdef = table.copy(opdef)
+	if raw_def.allow_onpole_horizontal then
+		local onpole_horiz_def = table.copy(othermounts_def)
 
-	if rdef.allow_onpole_horizontal then
-		ophdef.tiles[3] = "signs_lib_blank.png"
-		ophdef.tiles[4] = "signs_lib_pole_mount.png"
-		minetest.register_node(":"..name.."_onpole_horiz", ophdef)
-		table.insert(signs_lib.lbm_restore_nodes, name.."_onpole_horiz")
+		onpole_horiz_def.tiles[3] = "signs_lib_blank.png"
+		onpole_horiz_def.tiles[4] = raw_def.tiles[3] or "signs_lib_pole_mount.png"
+		onpole_horiz_def.tiles[5] = "signs_lib_blank.png"
+		onpole_horiz_def.tiles[6] = "signs_lib_blank.png"
+
+		minetest.register_node(":"..no_wall_name.."_onpole_horiz", onpole_horiz_def)
+		table.insert(signs_lib.lbm_restore_nodes, no_wall_name.."_onpole_horiz")
 	end
 
-	if rdef.allow_hanging then
+	if raw_def.allow_hanging then
 
-		local hdef = table.copy(def)
-		hdef.paramtype2 = "facedir"
+		local hanging_def = table.copy(def)
+		hanging_def.paramtype2 = "facedir"
 
 		local hcbox = signs_lib.make_selection_boxes(35, 32, nil, 0, 3, -18.5, true)
 
-		hdef.selection_box = rdef.hanging_selection_box or hcbox
-		hdef.node_box = rdef.hanging_node_box or rdef.hanging_selection_box or hcbox
+		hanging_def.selection_box = raw_def.hanging_selection_box or hcbox
+		hanging_def.node_box = raw_def.hanging_node_box or raw_def.hanging_selection_box or hcbox
 
-		hdef.groups.not_in_creative_inventory = 1
-		hdef.tiles[3] = "signs_lib_hangers.png"
-		hdef.mesh = string.gsub(string.gsub(hdef.mesh, "_facedir.obj", ".obj"), ".obj$", "_hanging.obj")
+		hanging_def.groups.not_in_creative_inventory = 1
+		hanging_def.tiles[3] = raw_def.tiles[5] or "signs_lib_hangers.png"
+		hanging_def.tiles[4] = "signs_lib_blank.png"
+		hanging_def.tiles[5] = "signs_lib_blank.png"
+		hanging_def.tiles[6] = "signs_lib_blank.png"
 
-		if hdef.entity_info then
-			hdef.entity_info.mesh = string.gsub(string.gsub(hdef.entity_info.mesh, "_facedir.obj", ".obj"), ".obj$", "_hanging.obj")
-			hdef.entity_info.yaw = signs_lib.standard_yaw
+		hanging_def.mesh = raw_def.hanging_mesh or string.gsub(string.gsub(hanging_def.mesh, "wall.obj$", "hanging.obj"), "_facedir", "")
+
+		if hanging_def.entity_info then
+			hanging_def.entity_info.mesh = string.gsub(string.gsub(hanging_def.entity_info.mesh, "entity_wall.obj$", "entity_hanging.obj"), "_facedir", "")
+			hanging_def.entity_info.yaw = signs_lib.standard_yaw
 		end
 
-		minetest.register_node(":"..name.."_hanging", hdef)
-		table.insert(signs_lib.lbm_restore_nodes, name.."_hanging")
+		minetest.register_node(":"..no_wall_name.."_hanging", hanging_def)
+		table.insert(signs_lib.lbm_restore_nodes, no_wall_name.."_hanging")
 	end
 
-	if rdef.allow_widefont then
+	if raw_def.allow_yard then
+
+		local ydef = table.copy(def)
+		ydef.paramtype2 = "facedir"
+
+		local ycbox = signs_lib.make_selection_boxes(35, 34.5, false, 0, -1.25, -19.69, true)
+
+		ydef.selection_box = raw_def.yard_selection_box or ycbox
+		ydef.tiles[3] = raw_def.tiles[6] or "default_wood.png"
+		ydef.tiles[4] = "signs_lib_blank.png"
+		ydef.tiles[5] = "signs_lib_blank.png"
+		ydef.tiles[6] = "signs_lib_blank.png"
+
+		ydef.node_box = raw_def.yard_node_box or raw_def.yard_selection_box or ycbox
+
+		ydef.groups.not_in_creative_inventory = 1
+		ydef.mesh = raw_def.yard_mesh or string.gsub(string.gsub(ydef.mesh, "wall.obj$", "yard.obj"), "_facedir", "")
+
+		if ydef.entity_info then
+			ydef.entity_info.mesh = string.gsub(string.gsub(ydef.entity_info.mesh, "entity_wall.obj$", "entity_yard.obj"), "_facedir", "")
+			ydef.entity_info.yaw = signs_lib.standard_yaw
+		end
+
+		minetest.register_node(":"..no_wall_name.."_yard", ydef)
+		table.insert(signs_lib.lbm_restore_nodes, no_wall_name.."_yard")
+	end
+
+	if raw_def.allow_widefont then
 		table.insert(signs_lib.old_widefont_signs, name.."_widefont")
 		table.insert(signs_lib.old_widefont_signs, name.."_widefont_onpole")
 		table.insert(signs_lib.old_widefont_signs, name.."_widefont_hanging")
+		table.insert(signs_lib.old_widefont_signs, name.."_widefont_yard")
 	end
 end
 

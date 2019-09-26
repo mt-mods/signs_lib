@@ -4,7 +4,7 @@ This is kaeza's and my signs library mod, originally forked from PilzAdam's vers
 
 The purpose of PilzAdam's original mod was to just provide a no-frills way make default signs show their text, via an entity placed right in front.  It was hacky, but it worked!
 
-While still hacky, this library is a modernized, feature-enhanced version of his code, which not only has visible text, but which allows that text to be colored, and displayed at any reasonable size, with any reasonable amount of text (as configured in a given node definition), with two font resolutions available. Plus, almost any sign can be attached to almost any kind of suitable pole or fencepost, or hung from a ceiling, in addition to being flat on a wall, floor, or ceiling.  Unlike previous incarnations of this code, signs' text is visible when the sign is flat on the floor or ceiling, as well as all other supported orientations.
+While still hacky, this library is a modernized, feature-enhanced version of his code, which not only has visible text, but which allows that text to be colored, and displayed at any reasonable size, with any reasonable amount of text (as configured in a given node definition), with two font resolutions available. Plus, almost any sign can be attached to almost any kind of suitable pole or fencepost.  Most signs that use the standard wall sign model can also be hung from a ceiling, or placed upright as a yard sign, in addition to being flat on a wall or floor.  Unlike previous incarnations of this code, signs' text is visible when the sign is flat on the floor or ceiling, as well as all other supported orientations/mounting styles.
 
 Without any other add-ons, this mod upgrades only the default wooden and steel signs.
 

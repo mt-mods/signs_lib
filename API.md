@@ -16,6 +16,17 @@ In this text, common terms such as `pos`, `node`, or `placer`/`digger` will not 
 
     Default: `"mesh"`
 
+  * `tiles = {table}`
+
+    Since this is a sign-specific library, this parameter behaves rather different from what you would normally use in `minetest.register_node()`.  The first two entries are mandatory.  The third, fourth and fifth entries are optional, depending on which mounting styles are enabled for a given node.
+
+    * entry 1: the front and back of the sign.
+    * entry 2: the sides/edges
+    * entry 3: texture for the pole mount.  If unspecified, the standard pole mount image is used, if needed.
+    * entry 4: texture for the hanging part.  If unspecified, the standard hanging chains image is used, if needed.
+    * entry 5: texture for the yard sign stick.  If unspecified, "default_wood.png" is used, if needed.
+    * entry 6: ignored.
+
   * `mesh = "string"`
 
     Default: `"signs_lib_standard_wall_sign.obj"`.
@@ -33,6 +44,11 @@ In this text, common terms such as `pos`, `node`, or `placer`/`digger` will not 
   * `wield_image = "string"`
 
     Default: whatever the `inventory_image` is set to (if anything).
+
+  * `selection_box = {table}`
+
+    Works the same as usual.  A helper function exists to create boxes by specifying only and X/Y size and offset:
+    `signs_lib.make_selection_boxes()` (see below).
 
   * `groups = {table}`
 
@@ -91,6 +107,23 @@ In this text, common terms such as `pos`, `node`, or `placer`/`digger` will not 
     See below under "Main functions".
 
     Default: `signs_lib.update_sign`
+
+  * `onpole_mesh = "string"`
+  * `hanging_mesh = "string"`
+  * `yard_mesh = "string"`
+
+    If your node needs a custom model for its on-pole, hanging, and/or yard variants, specify them here, as needed.  The materials and textures behave the same on these as on other sign models.  All sign model filenames are still derived from the base sign model, when not overridden here (so these can be totally arbitrary filenames).
+
+    Default: the normal "_onpole", "_hanging", or "_yard" version of the model specified by `mesh`.
+
+  * `onpole_selection_box = {table}`
+  * `hanging_selection_box = {table}`
+  * `yard_selection_box = {table}`
+  * `onpole_node_box = {table}`
+  * `hanging_node_box = {table}`
+  * `yard_node_box = {table}`
+
+    If your node needs special handling for its onpole-, hanging-, or yard-mode selection boxes or for their collision info (which `signs_lib` always uses the node's `node_box` item for), you can specify them here.  Same syntax as the regular `selection_box` setting.
 
   * `default_color = "string"`
 
@@ -165,21 +198,25 @@ In this text, common terms such as `pos`, `node`, or `placer`/`digger` will not 
 
   * `allow_hanging = bool`
 
-    If `true`, allow the registration function to create a "hanging from the ceiling" version of the initial, base sign node.
+    If `true`, allow the registration function to create a "hanging from the ceiling" version of the initial, base sign node.  Its name will be the same as the base node name, with "_wall" deleted from the name (if present), and "_hanging" appended.  For example, "default:sign_wall_wood" becomes "default:sign_wood_hanging".
 
     Default: `nil`
 
   * `allow_onpole = bool`
 
-    Allow creation of an on-pole variant of the base sign.
+    Allow creation of an on-pole variant of the base sign, named the same as the base sign, with "_wall" deleted and "_onpole" appended.  Example: "default:sign_wall_wood" becomes "default:sign_wood_onpole"
 
     Default: `nil`
 
   * `allow_onpole_horizontal = bool`
 
-    Allow creation of an on-horizontal-pole variant.  This flag is independent of `allow_onpole`; the mod may specify either or both.
+    Allow creation of an on-horizontal-pole variant.  This flag is independent of `allow_onpole`; the mod may specify either or both.  Its name will be the base node name, with "_wall" deleted and "_onpole_horiz" appended.  Example:  "default:sign_wall_wood" becomes "default:sign_wood_onpole_horiz".
 
     Default: `nil`
+
+  * `allow_yard = bool`
+
+    Allow creation of a yard sign variant, named the same as the base sign, with "_wall" deleted and "_yard" appended.  Example: "default:sign_wall_wood" becomes "default:sign_wood_yard"
 
   * `allow_widefont = bool`
 
