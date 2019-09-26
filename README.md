@@ -14,7 +14,7 @@ In general, text is rendered exactly as-written, left-to-right, top to bottom, w
 
 That said, there are some basic text formatting options:
 
-* Line breaks may be inserted by simply hitting `Enter` twice.
+* Paragraph breaks (blank lines) may be inserted by simply hitting `Enter` twice.
 
 * Eight arrow symbols are available, occupying positions 0x81 through 0x88 in the character set.  These are produced by writing a `^` followed by a number `1-8`:
 
