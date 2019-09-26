@@ -815,6 +815,9 @@ end
 
 function signs_lib.after_place_node(pos, placer, itemstack, pointed_thing, locked)
 	local playername = placer:get_player_name()
+
+	local controls = placer:get_player_control()
+
 	local signname = itemstack:get_name()
 	local no_wall_name = string.gsub(signname, "_wall", "")
 
@@ -824,7 +827,7 @@ function signs_lib.after_place_node(pos, placer, itemstack, pointed_thing, locke
 	local pnode = minetest.get_node(ppos)
 	local pdef = minetest.registered_items[pnode.name]
 
-	if def.allow_onpole and signs_lib.check_for_pole(pos, pointed_thing) then
+	if def.allow_onpole and signs_lib.check_for_pole(pos, pointed_thing) and not controls.sneak then
 		local newparam2
 		local lookdir = minetest.yaw_to_dir(placer:get_look_horizontal())
 		if def.paramtype2 == "wallmounted" then
@@ -834,7 +837,7 @@ function signs_lib.after_place_node(pos, placer, itemstack, pointed_thing, locke
 		end
 		local node = minetest.get_node(pos)
 		minetest.swap_node(pos, {name = no_wall_name.."_onpole", param2 = newparam2})
-	elseif def.allow_onpole_horizontal and signs_lib.check_for_horizontal_pole(pos, pointed_thing) then
+	elseif def.allow_onpole_horizontal and signs_lib.check_for_horizontal_pole(pos, pointed_thing) and not controls.sneak then
 		local newparam2
 		local lookdir = minetest.yaw_to_dir(placer:get_look_horizontal())
 		if def.paramtype2 == "wallmounted" then
@@ -844,12 +847,12 @@ function signs_lib.after_place_node(pos, placer, itemstack, pointed_thing, locke
 		end
 		local node = minetest.get_node(pos)
 		minetest.swap_node(pos, {name = no_wall_name.."_onpole_horiz", param2 = newparam2})
-	elseif def.allow_hanging and signs_lib.check_for_ceiling(pointed_thing) then
+	elseif def.allow_hanging and signs_lib.check_for_ceiling(pointed_thing) and not controls.sneak then
 		local newparam2 = minetest.dir_to_facedir(placer:get_look_dir())
 		local node = minetest.get_node(pos)
 		minetest.swap_node(pos, {name = no_wall_name.."_hanging", param2 = newparam2})
-	elseif def.allow_yard and signs_lib.check_for_floor(pointed_thing) then
- 		local newparam2 = minetest.dir_to_facedir(placer:get_look_dir())
+	elseif def.allow_yard and signs_lib.check_for_floor(pointed_thing) and not controls.sneak then
+		local newparam2 = minetest.dir_to_facedir(placer:get_look_dir())
 		local node = minetest.get_node(pos)
 		minetest.swap_node(pos, {name = no_wall_name.."_yard", param2 = newparam2})
 	elseif def.paramtype2 == "facedir" and signs_lib.check_for_ceiling(pointed_thing) then
@@ -857,6 +860,7 @@ function signs_lib.after_place_node(pos, placer, itemstack, pointed_thing, locke
 	elseif def.paramtype2 == "facedir" and signs_lib.check_for_floor(pointed_thing) then
 		minetest.swap_node(pos, {name = signname, param2 = 4})
 	end
+
 	if locked then
 		local meta = minetest.get_meta(pos)
 		meta:set_string("owner", playername)
