@@ -1012,7 +1012,7 @@ function signs_lib.register_sign(name, raw_def)
 		hanging_def.node_box = raw_def.hanging_node_box or raw_def.hanging_selection_box or hcbox
 
 		hanging_def.groups.not_in_creative_inventory = 1
-		hanging_def.tiles[3] = raw_def.tiles[5] or "signs_lib_hangers.png"
+		hanging_def.tiles[3] = raw_def.tiles[4] or "signs_lib_hangers.png"
 		hanging_def.tiles[4] = "signs_lib_blank.png"
 		hanging_def.tiles[5] = "signs_lib_blank.png"
 		hanging_def.tiles[6] = "signs_lib_blank.png"
@@ -1036,7 +1036,7 @@ function signs_lib.register_sign(name, raw_def)
 		local ycbox = signs_lib.make_selection_boxes(35, 34.5, false, 0, -1.25, -19.69, true)
 
 		ydef.selection_box = raw_def.yard_selection_box or ycbox
-		ydef.tiles[3] = raw_def.tiles[6] or "default_wood.png"
+		ydef.tiles[3] = raw_def.tiles[5] or "default_wood.png"
 		ydef.tiles[4] = "signs_lib_blank.png"
 		ydef.tiles[5] = "signs_lib_blank.png"
 		ydef.tiles[6] = "signs_lib_blank.png"
