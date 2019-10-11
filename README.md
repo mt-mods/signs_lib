@@ -24,19 +24,17 @@ That said, there are some basic text formatting options:
 
 * A color may be specified in the sign text by using "#" followed by a single hexadcimal digit (0-9 or a-f).  These colors come from the standard Linux/IRC/CGA color set, and are shown in the sign's formspec.  Any color change will remain in effect until changed again, or until the next line break.  Any number of color changes in any arbitrary arrangement is allowed.
 
+* Most writable signs can display double-wide text by flipping a switch in the sign's formspec.
+
 ## Sign placement and rotation notes
 
 * Pointing at a wall while placing will, of course, place the sign on the wall.
 
-* For most signs, pointing at the ground while placing puts the sign flat on the ground.
+* For most signs that use the standard sign model, pointing at the ground while placing creates an upright standalone yard sign.  Others not using the standard model will most often end up flat on the ground.
 
-  Exception: if you have [basic_signs](https://forum.minetest.net/viewtopic.php?f=11&t=23289) installed, placing a default wooden sign on the ground will instead create a "yard" sign (basically a regular wooden sign mounted upright on a small stick).
+* For most standard signs, pointing at the ceiling while placing will hang the sign from the ceiling by a pair of chains.  Others not using the standard model will usually end up flat on the ceiling.
 
-* For most signs, pointing at the ceiling while placing will put the sign flat against the ceiling.
-
-  Exception: default wood and steel signs will instead be hung from the ceiling by a pair of chains.  If you have [basic_signs](https://forum.minetest.net/viewtopic.php?f=11&t=23289), all standard signs created by it will do the same.
-
-* Pointing at an X or Z side of something that's detected as a pole/post will mount the sign onto that pole.  Note that the sign actually occupies the node space in front of the pole, since they're still separate nodes.  But, I figure, no one's going to want to use the space in front of the sign anyway, because doing so would of course obscure the sign, so it doesn't matter if the sign logically occupies that node space.
+* Pointing at an X or Z side of something that's detected as a pole/post will mount the sign onto that pole, if possible.  Note that the sign actually occupies the node space in front of the pole, since they're still separate nodes.  But, I figure, no one's going to want to use the space in front of the sign anyway, because doing so would of course obscure the sign, so it doesn't matter if the sign logically occupies that node space.
 
 * If you're holding the "Sneak" key (usually `Shift`) while placing, the on-pole/hanging/yard checks are skipped, allowing you to just place a sign flat onto the ground, ceiling, or top/bottom of a pole/post, like they used to work before `signs_lib` was a thing.
 
