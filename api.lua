@@ -159,7 +159,7 @@ local ctexcache = {}
 minetest.register_entity("signs_lib:text", {
 	collisionbox = { 0, 0, 0, 0, 0, 0 },
 	visual = "mesh",
-	mesh = "signs_lib_standard_wall_sign_entity.obj",
+	mesh = "signs_lib_standard_sign_entity_wall.obj",
 	textures = {},
 	static_save = false,
 	backface_culling = false
