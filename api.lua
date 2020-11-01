@@ -161,7 +161,7 @@ minetest.register_entity("signs_lib:text", {
 	visual = "mesh",
 	mesh = "signs_lib_standard_sign_entity_wall.obj",
 	textures = {},
-	static_save = false,
+	static_save = true,
 	backface_culling = false
 })
 
