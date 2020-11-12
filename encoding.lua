@@ -206,7 +206,7 @@ local utf8_decode = {
 local wide_character_codes = {
 }
 
-local unicode_install = function(
+signs_lib.unicode_install = function(
 	numbers
 )
 	local scope = utf8_decode
@@ -223,7 +223,7 @@ local unicode_install = function(
 	)
 end
 
-unicode_install({38,"26"})
+signs_lib.unicode_install({38,"26"})
 
 local nmdc = {
 	[36] = "$",
