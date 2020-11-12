@@ -153,6 +153,7 @@ signs_lib.flip_walldir = {
 
 -- Initialize character texture cache
 local ctexcache = {}
+local ctexcache_wide = {}
 
 -- entity handling
 
@@ -328,8 +329,10 @@ end
 local TP = signs_lib.path .. "/textures"
 -- Font file formatter
 local CHAR_FILE = "%s_%02x.png"
+local CHAR_FILE_WIDE = "%s_%s.png"
 -- Fonts path
 local CHAR_PATH = TP .. "/" .. CHAR_FILE
+local CHAR_PATH_WIDE = TP .. "/" .. CHAR_FILE_WIDE
 
 -- Lots of overkill here. KISS advocates, go away, shoo! ;) -- kaeza
 
@@ -389,6 +392,7 @@ end
 local function build_char_db(font_size)
 
 	local cw = {}
+	local cw_wide = {}
 
 	-- To calculate average char width.
 	local total_width = 0
@@ -404,20 +408,32 @@ local function build_char_db(font_size)
 		end
 	end
 
+	for i = 1, #signs_lib.wide_character_codes do
+		local ch = signs_lib.wide_character_codes[i]
+		local w, h = signs_lib.read_image_size(CHAR_PATH_WIDE:format("signs_lib_font_"..font_size.."px", ch))
+		if w and h then
+			cw_wide[ch] = w
+			total_width = total_width + w
+			char_count = char_count + 1
+		end
+	end
+
 	local cbw, cbh = signs_lib.read_image_size(TP.."/signs_lib_color_"..font_size.."px_n.png")
 	assert(cbw and cbh, "error reading bg dimensions")
-	return cw, cbw, cbh, (total_width / char_count)
+	return cw, cbw, cbh, (total_width / char_count), cw_wide
 end
 
 signs_lib.charwidth15,
 signs_lib.colorbgw15,
 signs_lib.lineheight15,
-signs_lib.avgwidth15 = build_char_db(15)
+signs_lib.avgwidth15,
+signs_lib.charwidth_wide15 = build_char_db(15)
 
 signs_lib.charwidth31,
 signs_lib.colorbgw31,
 signs_lib.lineheight31,
-signs_lib.avgwidth31 = build_char_db(31)
+signs_lib.avgwidth31,
+signs_lib.charwidth_wide31 = build_char_db(31)
 
 local sign_groups = {choppy=2, dig_immediate=2}
 local fences_with_sign = { }
@@ -453,7 +469,22 @@ local function char_tex(font_name, ch)
 	end
 end
 
-local function make_line_texture(line, lineno, pos, line_width, line_height, cwidth_tab, font_size, colorbgw)
+local function char_tex_wide(font_name, ch)
+	if ctexcache_wide[font_name..ch] then
+		return ctexcache_wide[font_name..ch], true
+	else
+		local exists, tex = file_exists(CHAR_PATH_WIDE:format(font_name, ch))
+		if exists then
+			tex = CHAR_FILE_WIDE:format(font_name, ch)
+		else
+			tex = CHAR_FILE:format(font_name, 0x5f)
+		end
+		ctexcache_wide[font_name..ch] = tex
+		return tex, exists
+	end
+end
+
+local function make_line_texture(line, lineno, pos, line_width, line_height, cwidth_tab, font_size, colorbgw, cwidth_tab_wide)
 	local width = 0
 	local maxw = 0
 	local font_name = "signs_lib_font_"..font_size.."px"
@@ -490,6 +521,27 @@ local function make_line_texture(line, lineno, pos, line_width, line_height, cwi
 		local word_l = #word
 		local i = 1
 		while i <= word_l  do
+			local wide_c
+			if "&#x" == word:sub(i, i + 2) then
+				local j = i + 3
+				local collected = ""
+				while j <= word_l do
+					local c = word:sub(j, j)
+					if c == ";" then
+						wide_c = collected
+						break
+					elseif c < "0" then
+						break
+					elseif "f" < c then
+						break
+					elseif ("9" < c) and (c < "a") then
+						break
+					else
+						collected = collected .. c
+						j = j + 1
+					end
+				end
+			end
 			local c = word:sub(i, i)
 			if c == "#" then
 				local cc = tonumber(word:sub(i+1, i+1), 16)
@@ -497,6 +549,25 @@ local function make_line_texture(line, lineno, pos, line_width, line_height, cwi
 					i = i + 1
 					cur_color = cc
 				end
+			elseif wide_c then
+				local w = cwidth_tab_wide[wide_c]
+				if w then
+					width = width + w + 1
+					if width >= (line_width - cwidth_tab[" "]) then
+						width = 0
+					else
+						maxw = math_max(width, maxw)
+					end
+					if #chars < MAX_INPUT_CHARS then
+						table.insert(chars, {
+							off = ch_offs,
+							tex = char_tex_wide(font_name, wide_c),
+							col = ("%X"):format(cur_color),
+						})
+					end
+					ch_offs = ch_offs + w
+				end
+				i = i + #wide_c + 3
 			else
 				local w = cwidth_tab[c]
 				if w then
@@ -576,6 +647,7 @@ function signs_lib.make_sign_texture(lines, pos)
 	local line_width
 	local line_height
 	local char_width
+	local char_width_wide
 	local colorbgw
 	local widemult = 1
 
@@ -588,12 +660,14 @@ function signs_lib.make_sign_texture(lines, pos)
 		line_width = math.floor(signs_lib.avgwidth31 * def.chars_per_line) * (def.horiz_scaling * widemult)
 		line_height = signs_lib.lineheight31
 		char_width = signs_lib.charwidth31
+		char_width_wide = signs_lib.charwidth_wide31
 		colorbgw = signs_lib.colorbgw31
 	else
 		font_size = 15
 		line_width = math.floor(signs_lib.avgwidth15 * def.chars_per_line) * (def.horiz_scaling * widemult)
 		line_height = signs_lib.lineheight15
 		char_width = signs_lib.charwidth15
+		char_width_wide = signs_lib.charwidth_wide15
 		colorbgw = signs_lib.colorbgw15
 	end
 
@@ -602,7 +676,7 @@ function signs_lib.make_sign_texture(lines, pos)
 	local lineno = 0
 	for i = 1, #lines do
 		if lineno >= def.number_of_lines then break end
-		local linetex, ln = make_line_texture(lines[i], lineno, pos, line_width, line_height, char_width, font_size, colorbgw)
+		local linetex, ln = make_line_texture(lines[i], lineno, pos, line_width, line_height, char_width, font_size, colorbgw, char_width_wide)
 		table.insert(texture, linetex)
 		lineno = ln + 1
 	end

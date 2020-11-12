@@ -203,6 +203,28 @@ local utf8_decode = {
 	[210] = {[144] = "\165", [145] = "\180"}
 }
 
+local wide_character_codes = {
+}
+
+local unicode_install = function(
+	numbers
+)
+	local scope = utf8_decode
+	for i = 1,#numbers-2 do
+		if not scope[numbers[i]] then
+			scope[numbers[i]] = {}
+		end
+		scope = scope[numbers[i]]
+	end
+	scope[numbers[#numbers-1]] = "&#x" .. numbers[#numbers] .. ";"
+	table.insert(
+		wide_character_codes,
+		numbers[#numbers]
+	)
+end
+
+unicode_install({38,"26"})
+
 local nmdc = {
 	[36] = "$",
 	[124] = "|"
@@ -230,36 +252,33 @@ function AnsiToUtf8(s)
 end
 
 function Utf8ToAnsi(s)
-	local a, j, r, b = 0, 0, ""
+	local a, j, r, b, scope = 0, 0, ""
 	for i = 1, s and s:len() or 0 do
 		b = s:byte(i)
-		if b < 128 then
+		if b == 0x26 then
+			r = r .. "&#x26;"
+		elseif b < 128 then
 			if nmdc[b] then
 				r = r .. nmdc[b]
 			else
 				r = r .. string.char(b)
 			end
-		elseif a == 2 then
-			a, j = a - 1, b
-		elseif a == 1 then
-			--if j == nil or b == nil then return r end
-			--print(j)
-			--print(b)
-			--local ansi = utf8_decode[j]
-			--if ansi == nil then return r end
-			--if ansi[b] == nil then return r end
-			if utf8_decode[j] then
-				if utf8_decode[j][b] then
-					a, r = a - 1, r .. utf8_decode[j][b]
+		elseif scope then
+			if scope[b] then
+				scope = scope[b]
+				if "string" == type(scope) then
+					r, scope = r .. scope
 				end
+			else
+				r, scope = r .. "_"
 			end
-		elseif b == 226 then
-			a = 2
-		elseif b == 194 or b == 208 or b == 209 or b == 210 then
-			j, a = b, 1
+		elseif utf8_decode[b] then
+			scope = utf8_decode[b]
 		else
 			r = r .. "_"
 		end
 	end
 	return r
 end
+
+signs_lib.wide_character_codes = wide_character_codes
