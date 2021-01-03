@@ -78,29 +78,17 @@ In this text, common terms such as `pos`, `node`, or `placer`/`digger` will not 
 
     Default: `signs_lib.after_place_node`
 
-  * `on_rightclick = function(pos)`
+  * `on_rightclick = function(pos, node, player, itemstack, pointed_thing)`
 
     See below under "Main functions".
 
-    Default: `signs_lib.construct_sign`
-
-  * `on_construct = function(pos)`
-
-    See below under "Main functions".
-
-    Default: `signs_lib.construct_sign`
+    Default: `signs_lib.rightclick_sign`
 
   * `on_destruct = function(pos)`
 
     See below under "Main functions".
 
     Default: `signs_lib.destruct_sign`
-
-  * `on_receive_fields = function(pos, formname, fields, sender)`
-
-    See below under "Main functions".
-
-    Default: `signs_lib.receive_fields`
 
   * `on_punch = function(pos)`
 
@@ -258,17 +246,13 @@ signs_lib.register_sign("basic_signs:sign_wall_glass", {
 
   * `locked`: if set to **true**, the sign's meta will be tweaked to indicate its ownership by the `placer`.
 
-* `signs_lib.construct_sign(pos)`
+* `signs_lib.rightclick_sign(pos, node, player, itemstack, pointed_thing)`
 
-  Sets up the sign's formspec and infotext overlay.
+  Open the default sign formspec, if the player has the `signslib_edit` privilege.
 
 * `signs_lib.destruct_sign(pos)`
 
   Deletes the sign's entity, if any, when the sign is dug.
-
-* `signs_lib.receive_fields(pos, formname, fields, sender)`
-
-  This handles the text input and wide font on/off switch, logging any actions the user takes.  Bails-out silently if the user is not allowed to edit the sign.  See the standard Minetest lua_api.txt for details.
 
 * `signs_lib.update_sign(pos, fields)`
 
@@ -352,7 +336,7 @@ Supplying one or both of the following in the pole/post node's definition will c
     If supplied, this function will be run when the mod is looking for a normal vertical pole/post.  Useful if the target node's orientation and/or shape determine what sides a sign can attach to.  For example, [Pipeworks](https://forum.minetest.net/viewtopic.php?pid=27794) uses this to figure out if a sign can be attached to a tube or pipe, depending on the tube's/pipe's number of junctions, and on its orientation and that of the placed sign.
 
     * `def`: the placed sign's node defintion
-    * `pole_pos`: the target node's position 
+    * `pole_pos`: the target node's position
     * `pole_node`: the target node itself
     * `pole_def`: its node definition
 

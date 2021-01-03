@@ -2,6 +2,8 @@
 
 local S = signs_lib.gettext
 
+local function get_sign_formspec() end
+
 signs_lib.lbm_restore_nodes = {}
 signs_lib.old_fenceposts = {}
 signs_lib.old_fenceposts_replacement_signs = {}
@@ -345,10 +347,10 @@ local function file_exists(name, return_handle, mode)
 		if (return_handle) then
 			return f
 		end
-		io.close(f) 
-		return true 
-	else 
-		return false 
+		io.close(f)
+		return true
+	else
+		return false
 	end
 end
 
@@ -552,7 +554,7 @@ local function make_line_texture(line, lineno, pos, line_width, line_height, cwi
 			table.insert(texture, (":%d,%d=%s"):format(xpos + ch.off, ypos, ch.tex))
 		end
 		table.insert(
-			texture, 
+			texture,
 			(":%d,%d="):format(xpos + word.w, ypos) .. char_tex(font_name, " ")
 		)
 		xpos = xpos + word.w + cwidth_tab[" "]
@@ -619,31 +621,13 @@ function signs_lib.split_lines_and_words(text)
 	return lines
 end
 
-function signs_lib.construct_sign(pos)
-	local form = "size[6,4]"..
-		"textarea[0,-0.3;6.5,3;text;;${text}]"..
-		"background[-0.5,-0.5;7,5;signs_lib_sign_bg.jpg]"
-	local node = minetest.get_node(pos)
-	local def = minetest.registered_items[node.name]
-	local meta = minetest.get_meta(pos)
+function signs_lib.rightclick_sign(pos, node, player, itemstack, pointed_thing)
 
-	if def.allow_widefont then
-		local state = "off"
-		if meta:get_int("widefont") == 1 then state = "on" end
-		form = form.."label[1,3.4;Use wide font]"..
-			"image_button[1.1,3.7;1,0.6;signs_lib_switch_"..
-			state..".png;"..
-			state..";;;false;signs_lib_switch_interm.png]"..
-			"button_exit[3,3.4;2,1;ok;"..S("Write").."]"
-	else
-		form = form.."button_exit[2,3.4;2,1;ok;"..S("Write").."]"
-	end
+	local playername = player:get_player_name()
+	if not minetest.check_player_privs(playername, {signslib_edit = true}) then return end
 
-	meta:set_string("formspec", form)
-	local i = meta:get_string("infotext")
-	if i == "" then -- it wasn't even set, so set it.
-		meta:set_string("infotext", "")
-	end
+	player:get_meta():set_string("signslib:pos", minetest.pos_to_string(pos))
+	minetest.show_formspec(playername, "signs_lib:sign", get_sign_formspec(pos, node.name))
 end
 
 function signs_lib.destruct_sign(pos)
@@ -663,6 +647,11 @@ end
 function signs_lib.update_sign(pos, fields)
 	local meta = minetest.get_meta(pos)
 
+	-- legacy udpate
+	if meta:get_string("formspec") ~= "" then
+		meta:set_string("formspec", "")
+	end
+
 	local text = fields and fields.text or meta:get_string("text")
 	text = trim_input(text)
 
@@ -675,54 +664,19 @@ function signs_lib.update_sign(pos, fields)
 	signs_lib.set_obj_text(pos, text)
 end
 
-function signs_lib.receive_fields(pos, formname, fields, sender)
-
-	if not fields or not signs_lib.can_modify(pos, sender) then return end
-
-	if fields.text and fields.ok then
-		minetest.log("action", S("@1 wrote \"@2\" to sign at @3",
-			(sender:get_player_name() or ""),
-			fields.text:gsub('\\', '\\\\'):gsub("\n", "\\n"),
-			minetest.pos_to_string(pos)
-		))
-		signs_lib.update_sign(pos, fields)
-	elseif fields.on or fields.off then
-		local node = minetest.get_node(pos)
-		local meta = minetest.get_meta(pos)
-		local change
-
-		if fields.on and meta:get_int("widefont") == 1 then
-			meta:set_int("widefont", 0)
-			change = true
-		elseif fields.off and meta:get_int("widefont") == 0 then
-			meta:set_int("widefont", 1)
-			change = true
-		end
-		if change then
-			minetest.log("action", S("@1 flipped the wide-font switch to \"@2\" at @3",
-				(sender:get_player_name() or ""),
-				(fields.on and "off" or "on"),
-				minetest.pos_to_string(pos)
-			))
-			signs_lib.construct_sign(pos)
-			signs_lib.update_sign(pos, fields)
-		end
-	end
-end
-
 function signs_lib.can_modify(pos, player)
 	local meta = minetest.get_meta(pos)
 	local owner = meta:get_string("owner")
 	local playername = player:get_player_name()
 
-	if minetest.is_protected(pos, playername) then 
+	if minetest.is_protected(pos, playername) then
 		minetest.record_protection_violation(pos, playername)
 		return false
 	end
 
 	if owner == ""
 	  or playername == owner
-	  or (minetest.check_player_privs(playername, {sign_editor=true}))
+	  or (minetest.check_player_privs(playername, {signslib_edit=true}))
 	  or (playername == minetest.settings:get("name")) then
 		return true
 	end
@@ -887,10 +841,8 @@ function signs_lib.register_sign(name, raw_def)
 	def.after_place_node = raw_def.after_place_node or signs_lib.after_place_node
 
 	if raw_def.entity_info then
-		def.on_rightclick       = raw_def.on_rightclick       or signs_lib.construct_sign
-		def.on_construct        = raw_def.on_construct        or signs_lib.construct_sign
+		def.on_rightclick       = raw_def.on_rightclick       or signs_lib.rightclick_sign
 		def.on_destruct         = raw_def.on_destruct         or signs_lib.destruct_sign
-		def.on_receive_fields   = raw_def.on_receive_fields   or signs_lib.receive_fields
 		def.on_punch            = raw_def.on_punch            or signs_lib.update_sign
 		def.number_of_lines     = raw_def.number_of_lines     or signs_lib.standard_lines
 		def.horiz_scaling       = raw_def.horiz_scaling       or signs_lib.standard_hscale
@@ -1184,3 +1136,74 @@ minetest.register_chatcommand("regen_signs", {
 		minetest.chat_send_player(player_name, "Finished.")
 	end
 })
+
+minetest.register_privilege("signslib_edit", {})
+
+
+
+--
+-- local functions
+--
+
+function get_sign_formspec(pos, nodename)
+
+	local meta = minetest.get_meta(pos)
+	local txt = meta:get_string("text")
+
+	local formspec = {
+		"size[6,4]",
+		"textarea[0,-0.3;6.5,3;text;;" .. txt .. "]",
+		"background[-0.5,-0.5;7,5;signs_lib_sign_bg.jpg]",
+		"button_exit[2,3.4;2,1;ok;" .. S("Write") .. "]"
+	}
+
+	if minetest.registered_nodes[nodename].allow_widefont then
+		local state = "off"
+		if meta:get_int("widefont") == 1 then state = "on" end
+		formspec[5] = "label[0.5,3.4;Use wide font]"
+		formspec[6] = "image_button[0.6,3.7;1,0.6;signs_lib_switch_" .. state .. ".png;"
+				.. state .. ";;;false;signs_lib_switch_interm.png]"
+	end
+
+	return table.concat(formspec, "")
+end
+
+
+minetest.register_on_player_receive_fields(function(player, formname, fields)
+
+	if formname ~= "signs_lib:sign" then return end
+
+	local pos_string = player:get_meta():get_string("signslib:pos")
+	local pos = minetest.string_to_pos(pos_string)
+	local playername = player:get_player_name()
+
+	if fields.text and fields.ok then
+		minetest.log("action", S("@1 wrote \"@2\" to sign at @3",
+			(playername or ""),
+			fields.text:gsub('\\', '\\\\'):gsub("\n", "\\n"),
+			pos_string
+		))
+		signs_lib.update_sign(pos, fields)
+	elseif fields.on or fields.off then
+		local node = minetest.get_node(pos)
+		local meta = minetest.get_meta(pos)
+		local change
+
+		if fields.on and meta:get_int("widefont") == 1 then
+			meta:set_int("widefont", 0)
+			change = true
+		elseif fields.off and meta:get_int("widefont") == 0 then
+			meta:set_int("widefont", 1)
+			change = true
+		end
+		if change then
+			minetest.log("action", S("@1 flipped the wide-font switch to \"@2\" at @3",
+				(playername or ""),
+				(fields.on and "off" or "on"),
+				minetest.pos_to_string(pos)
+			))
+			minetest.show_formspec(playername, "signs_lib:sign", get_sign_formspec(pos, node.name))
+			signs_lib.update_sign(pos, fields)
+		end
+	end
+end)
