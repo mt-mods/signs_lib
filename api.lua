@@ -623,11 +623,10 @@ end
 
 function signs_lib.rightclick_sign(pos, node, player, itemstack, pointed_thing)
 
-	local playername = player:get_player_name()
-	if not minetest.check_player_privs(playername, {signslib_edit = true}) then return end
+	if not signs_lib.can_modify(pos, player) then return end
 
 	player:get_meta():set_string("signslib:pos", minetest.pos_to_string(pos))
-	minetest.show_formspec(playername, "signs_lib:sign", get_sign_formspec(pos, node.name))
+	minetest.show_formspec(player:get_player_name(), "signs_lib:sign", get_sign_formspec(pos, node.name))
 end
 
 function signs_lib.destruct_sign(pos)
