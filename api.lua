@@ -1195,14 +1195,15 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			meta:set_int("widefont", 1)
 			change = true
 		end
+
 		if change then
 			minetest.log("action", S("@1 flipped the wide-font switch to \"@2\" at @3",
 				(playername or ""),
 				(fields.on and "off" or "on"),
 				minetest.pos_to_string(pos)
 			))
-			minetest.show_formspec(playername, "signs_lib:sign", get_sign_formspec(pos, node.name))
 			signs_lib.update_sign(pos, fields)
+			minetest.show_formspec(playername, "signs_lib:sign", get_sign_formspec(pos, node.name))
 		end
 	end
 end)
