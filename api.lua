@@ -1151,7 +1151,7 @@ function get_sign_formspec(pos, nodename)
 
 	local formspec = {
 		"size[6,4]",
-		"textarea[0,-0.3;6.5,3;text;;" .. txt .. "]",
+		"textarea[0,-0.3;6.5,3;text;;" .. minetest.formspec_escape(txt) .. "]",
 		"background[-0.5,-0.5;7,5;signs_lib_sign_bg.jpg]",
 		"button_exit[2,3.4;2,1;ok;" .. S("Write") .. "]"
 	}
