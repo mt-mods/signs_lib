@@ -55,3 +55,9 @@ At present, only one command is defined:
 This will read through the list of currently-loaded blocks known to contain one or more signs, delete all entities found in each sign's node space, and respawn and re-render each from scratch.
 
 The list of loaded, sign-bearing blocks is created/populated by an LBM (and trimmed by this command if any listed blocks are found to have been unloaded).
+
+## Privileges
+
+* `signslib_edit`
+
+Allows to rotate signs and to open (and consequently edit) any default sign formspec.
