@@ -252,7 +252,10 @@ function signs_lib.set_obj_text(pos, text)
 	local text_ansi = Utf8ToAnsi(text)
 	local n = minetest.registered_nodes[minetest.get_node(pos).name]
 	signs_lib.delete_objects(pos)
-	signs_lib.spawn_entity(pos, signs_lib.make_sign_texture(split(text_ansi), pos) )
+	-- only create sign entity for actual text
+	if text_ansi and text_ansi ~= "" then
+		signs_lib.spawn_entity(pos, signs_lib.make_sign_texture(split(text_ansi), pos) )
+	end
 end
 
 -- rotation
