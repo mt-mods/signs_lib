@@ -14,7 +14,8 @@ signs_lib.register_sign("default:sign_wall_wood", {
 	allow_widefont = true,
 	allow_onpole = true,
 	allow_onpole_horizontal = true,
-	allow_yard = true
+	allow_yard = true,
+	use_texture_alpha = "clip",
 })
 
 signs_lib.register_sign("default:sign_wall_steel", {
@@ -35,7 +36,8 @@ signs_lib.register_sign("default:sign_wall_steel", {
 	allow_widefont = true,
 	allow_onpole = true,
 	allow_onpole_horizontal = true,
-	allow_yard = true
+	allow_yard = true,
+	use_texture_alpha = "clip",
 })
 
 minetest.register_alias("signs:sign_hanging",                   "default:sign_wood_hanging")
