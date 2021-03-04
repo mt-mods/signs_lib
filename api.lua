@@ -1228,16 +1228,17 @@ function get_sign_formspec(pos, nodename)
 
 	local formspec = {
 		"size[6,4]",
-		"textarea[0,-0.3;6.5,3;text;;" .. minetest.formspec_escape(txt) .. "]",
-		"background[-0.5,-0.5;7,5;signs_lib_sign_bg.jpg]",
-		"button_exit[2,3.4;2,1;ok;" .. S("Write") .. "]"
+		"background[-0.5,-0.5;7,5;signs_lib_sign_bg.png]",
+		"image[0.1,2.4;7,1;signs_lib_sign_color_palette.png]", 
+		"textarea[0.15,-0.2;6.3,2.8;text;;" .. minetest.formspec_escape(txt) .. "]",
+		"button_exit[3,3.4;2,1;ok;" .. S("Write") .. "]"
 	}
 
 	if minetest.registered_nodes[nodename].allow_widefont then
 		local state = "off"
 		if meta:get_int("widefont") == 1 then state = "on" end
-		formspec[5] = "label[0.5,3.4;Use wide font]"
-		formspec[6] = "image_button[0.6,3.7;1,0.6;signs_lib_switch_" .. state .. ".png;"
+		formspec[#formspec+1] = "label[0.9,3.4;Use wide font]"
+		formspec[#formspec+1] = "image_button[1.1,3.7;1,0.6;signs_lib_switch_" .. state .. ".png;"
 				.. state .. ";;;false;signs_lib_switch_interm.png]"
 	end
 
