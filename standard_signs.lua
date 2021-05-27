@@ -16,10 +16,6 @@ signs_lib.register_sign("default:sign_wall_wood", {
 	allow_onpole_horizontal = true,
 	allow_yard = true,
 	use_texture_alpha = "clip",
-	on_punch = function(pos, node, puncher, pointed_thing)
-		signs_lib.glow(pos, node, puncher)
-		return signs_lib.update_sign
-	end
 })
 
 signs_lib.register_sign("default:sign_wall_steel", {

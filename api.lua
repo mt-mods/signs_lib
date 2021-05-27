@@ -716,7 +716,7 @@ end
 function signs_lib.destruct_sign(pos)
 	local meta = minetest.get_meta(pos)
 	local glow = meta:get_string("glow")
-	if glow ~= "" then
+	if glow ~= "" and not minetest.is_creative_enabled("") then
 		local num = tonumber(glow)
 		minetest.add_item(pos, ItemStack(signs_lib.glow_item .. " " .. num))
 	end
@@ -734,6 +734,10 @@ local function make_infotext(text)
 end
 
 function signs_lib.glow(pos, node, puncher)
+	local name = puncher:get_player_name()
+	if minetest.is_protected(pos, name) then
+		return
+	end
 	local tool = puncher:get_wielded_item()
 	if tool:get_name() == signs_lib.glow_item then
 		local meta = minetest.get_meta(pos)
@@ -745,8 +749,10 @@ function signs_lib.glow(pos, node, puncher)
 		else
 			return -- already at brightest level
 		end
-		tool:take_item()
-		puncher:set_wielded_item(tool)
+		if not minetest.is_creative_enabled(name) then
+			tool:take_item()
+			puncher:set_wielded_item(tool)
+		end
 		meta:set_string("glow", glow)
 	end
 end
@@ -935,6 +941,21 @@ function signs_lib.register_fence_with_sign()
 	minetest.log("warning", "[signs_lib] ".."Attempt to call no longer used function signs_lib.register_fence_with_sign()")
 end
 
+local use_glow = function(pos, node, puncher, pointed_thing)
+	signs_lib.glow(pos, node, puncher)
+	return signs_lib.update_sign(pos)
+end
+
+local glow_drops = function(pos, oldnode, oldmetadata, digger)
+	if minetest.is_creative_enabled(digger:get_player_name()) then
+		return
+	end
+	local glow = oldmetadata and oldmetadata.fields and oldmetadata.fields.glow
+	if glow then
+		minetest.add_item(pos, ItemStack(signs_lib.glow_item .. " " .. glow))
+	end
+end
+
 function signs_lib.register_sign(name, raw_def)
 	local def = table.copy(raw_def)
 
@@ -950,9 +971,16 @@ function signs_lib.register_sign(name, raw_def)
 	def.after_place_node = raw_def.after_place_node or signs_lib.after_place_node
 
 	if raw_def.entity_info then
+
+		if def.allow_glow ~= false then
+			def.on_punch        = raw_def.on_punch            or use_glow
+			def.after_dig_node  = raw_def.after_dig_node      or glow_drops
+		else
+			def.on_punch        = raw_def.on_punch            or signs_lib.update_sign
+		end
+
 		def.on_rightclick       = raw_def.on_rightclick       or signs_lib.rightclick_sign
 		def.on_destruct         = raw_def.on_destruct         or signs_lib.destruct_sign
-		def.on_punch            = raw_def.on_punch            or signs_lib.update_sign
 		def.number_of_lines     = raw_def.number_of_lines     or signs_lib.standard_lines
 		def.horiz_scaling       = raw_def.horiz_scaling       or signs_lib.standard_hscale
 		def.vert_scaling        = raw_def.vert_scaling        or signs_lib.standard_vscale
