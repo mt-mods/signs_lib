@@ -232,7 +232,7 @@ function signs_lib.spawn_entity(pos, texture, glow)
 	end
 
 	if glow ~= "" then
-		obj:set_properties({glow = tonumber(glow * 5))
+		obj:set_properties( {glow = tonumber(glow * 5)} )
 	end
 
 	if yaw then
