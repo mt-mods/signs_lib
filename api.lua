@@ -942,7 +942,9 @@ function signs_lib.register_fence_with_sign()
 end
 
 local use_glow = function(pos, node, puncher, pointed_thing)
-	signs_lib.glow(pos, node, puncher)
+	if puncher then -- if e.g. a machine tries to punch; only a real person should change the lighting
+		signs_lib.glow(pos, node, puncher)
+	end
 	return signs_lib.update_sign(pos)
 end
 
