@@ -707,7 +707,7 @@ end
 
 function signs_lib.rightclick_sign(pos, node, player, itemstack, pointed_thing)
 
-	if not signs_lib.can_modify(pos, player) then return end
+	if not player or not signs_lib.can_modify(pos, player) then return end
 
 	player:get_meta():set_string("signslib:pos", minetest.pos_to_string(pos))
 	minetest.show_formspec(player:get_player_name(), "signs_lib:sign", get_sign_formspec(pos, node.name))
