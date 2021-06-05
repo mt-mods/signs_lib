@@ -555,8 +555,9 @@ local function make_line_texture(line, lineno, pos, line_width, line_height, cwi
 				end
 			end
 			local c = word:sub(i, i)
-			if c == "#" then
-				local cc = tonumber(word:sub(i+1, i+1), 16)
+			local c2 = word:sub(i+1, i+1)
+			if c == "#" and c2 ~= "#" then
+				local cc = tonumber(c2, 16)
 				if cc then
 					i = i + 1
 					cur_color = cc
