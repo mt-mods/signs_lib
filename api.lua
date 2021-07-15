@@ -950,7 +950,7 @@ local use_glow = function(pos, node, puncher, pointed_thing)
 end
 
 local glow_drops = function(pos, oldnode, oldmetadata, digger)
-	if minetest.is_creative_enabled(digger:get_player_name()) then
+	if digger and minetest.is_creative_enabled(digger:get_player_name()) then
 		return
 	end
 	local glow = oldmetadata and oldmetadata.fields and oldmetadata.fields.glow
