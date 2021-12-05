@@ -1,5 +1,8 @@
 -- encoding borrowed from signs_lib fork at https://github.com/lord-server/lord
 
+-- The "ANSI" encoding here actually refers to "windows-1251", which shows up as
+-- "ANSI" on Russian version of MS Windows
+
 local ansi_decode = {
 	[128] = "\208\130",
 	[129] = "\208\131",
