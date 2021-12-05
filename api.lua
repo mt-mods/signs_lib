@@ -533,27 +533,7 @@ local function make_line_texture(line, lineno, pos, line_width, line_height, cwi
 		local word_l = #word
 		local i = 1
 		while i <= word_l  do
-			local wide_c
-			if "&#x" == word:sub(i, i + 2) then
-				local j = i + 3
-				local collected = ""
-				while j <= word_l do
-					local c = word:sub(j, j)
-					if c == ";" then
-						wide_c = collected
-						break
-					elseif c < "0" then
-						break
-					elseif "f" < c then
-						break
-					elseif ("9" < c) and (c < "a") then
-						break
-					else
-						collected = collected .. c
-						j = j + 1
-					end
-				end
-			end
+			local wide_type, wide_c = string.match(word:sub(i), "^&#([xu])(%x+);")
 			local c = word:sub(i, i)
 			local c2 = word:sub(i+1, i+1)
 			if c == "#" and c2 ~= "#" then
@@ -563,7 +543,10 @@ local function make_line_texture(line, lineno, pos, line_width, line_height, cwi
 					cur_color = cc
 				end
 			elseif wide_c then
-				local w = cwidth_tab_wide[wide_c]
+				local w = font_size
+				if wide_type == "x" then
+					w = cwidth_tab_wide[wide_c]
+				end
 				if w then
 					width = width + w + 1
 					if width >= (line_width - cwidth_tab[" "]) then
@@ -572,9 +555,19 @@ local function make_line_texture(line, lineno, pos, line_width, line_height, cwi
 						maxw = math_max(width, maxw)
 					end
 					if #chars < MAX_INPUT_CHARS then
+						local tex
+						if wide_type == "x" then
+							tex = char_tex_wide(font_name, wide_c)
+						else
+							local code = tonumber(wide_c, 16)
+							local x = code % 256
+							local y = math.floor(code / 256)
+							tex = string.format(
+								"signs_lib_unifont.png\\^[sheet\\:256x256\\:%d,%d", x, y)
+						end
 						table.insert(chars, {
 							off = ch_offs,
-							tex = char_tex_wide(font_name, wide_c),
+							tex = tex,
 							col = ("%X"):format(cur_color),
 						})
 					end
