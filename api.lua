@@ -16,7 +16,7 @@ signs_lib.standard_lines = 6
 signs_lib.standard_hscale = 1
 signs_lib.standard_vscale = 1
 signs_lib.standard_lspace = 1
-signs_lib.standard_fsize = 15
+signs_lib.standard_fsize = 16
 signs_lib.standard_xoffs = 4
 signs_lib.standard_yoffs = 0
 signs_lib.standard_cpl = 35
@@ -435,17 +435,17 @@ local function build_char_db(font_size)
 	return cw, cbw, cbh, (total_width / char_count), cw_wide
 end
 
-signs_lib.charwidth15,
-signs_lib.colorbgw15,
-signs_lib.lineheight15,
-signs_lib.avgwidth15,
-signs_lib.charwidth_wide15 = build_char_db(15)
+signs_lib.charwidth16,
+signs_lib.colorbgw16,
+signs_lib.lineheight16,
+signs_lib.avgwidth16,
+signs_lib.charwidth_wide16 = build_char_db(16)
 
-signs_lib.charwidth31,
-signs_lib.colorbgw31,
-signs_lib.lineheight31,
-signs_lib.avgwidth31,
-signs_lib.charwidth_wide31 = build_char_db(31)
+signs_lib.charwidth32,
+signs_lib.colorbgw32,
+signs_lib.lineheight32,
+signs_lib.avgwidth32,
+signs_lib.charwidth_wide32 = build_char_db(32)
 
 local sign_groups = {choppy=2, dig_immediate=2}
 local fences_with_sign = { }
@@ -668,20 +668,20 @@ function signs_lib.make_sign_texture(lines, pos)
 		widemult = 0.5
 	end
 
-	if def.font_size and def.font_size == 31 then
-		font_size = 31
-		line_width = math.floor(signs_lib.avgwidth31 * def.chars_per_line) * (def.horiz_scaling * widemult)
-		line_height = signs_lib.lineheight31
-		char_width = signs_lib.charwidth31
-		char_width_wide = signs_lib.charwidth_wide31
-		colorbgw = signs_lib.colorbgw31
+	if def.font_size and (def.font_size == 32 or def.font_size == 31) then
+		font_size = 32
+		line_width = math.floor(signs_lib.avgwidth32 * def.chars_per_line) * (def.horiz_scaling * widemult)
+		line_height = signs_lib.lineheight32
+		char_width = signs_lib.charwidth32
+		char_width_wide = signs_lib.charwidth_wide32
+		colorbgw = signs_lib.colorbgw32
 	else
-		font_size = 15
-		line_width = math.floor(signs_lib.avgwidth15 * def.chars_per_line) * (def.horiz_scaling * widemult)
-		line_height = signs_lib.lineheight15
-		char_width = signs_lib.charwidth15
-		char_width_wide = signs_lib.charwidth_wide15
-		colorbgw = signs_lib.colorbgw15
+		font_size = 16
+		line_width = math.floor(signs_lib.avgwidth16 * def.chars_per_line) * (def.horiz_scaling * widemult)
+		line_height = signs_lib.lineheight16
+		char_width = signs_lib.charwidth16
+		char_width_wide = signs_lib.charwidth_wide16
+		colorbgw = signs_lib.colorbgw16
 	end
 
 	local texture = { ("[combine:%dx%d"):format(line_width, (line_height + def.line_spacing) * def.number_of_lines * def.vert_scaling) }

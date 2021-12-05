@@ -10,7 +10,7 @@ sed 's<{\(.*\)"\(.*\)"}</bin/echo -e "convert\\\
  -size 180x180 xc:white\\\
  -font /usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf\\\
  -gravity northwest\\\
- -pointsize 15\\\
+ -pointsize 16\\\
  +antialias\\\
  -annotate 0 '"'"'\1'"'"'\\\
  "'"$1"'/im-out.png" 2> "'"$1"'/im.err"\
@@ -24,16 +24,16 @@ sed '"'"'s%.*%convert\\\
  -negate\\\
  -monochrome\\\
  -transparent white\\\
- -crop \\$((\&+1))x15+0+2\\\
+ -crop \\$((\&+1))x16+0+2\\\
  +repage\\\
- '"$1"'/signs_lib_font_15px_\2.png%'"'"'|\
+ '"$1"'/signs_lib_font_16px_\2.png%'"'"'|\
 sh -e -x\
 convert\\\
  -debug annotate\\\
  -size 180x180 xc:white\\\
  -font /usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf\\\
  -gravity northwest\\\
- -pointsize 31\\\
+ -pointsize 32\\\
  +antialias\\\
  -annotate 0 '"'"'\1'"'"'\\\
  "'"$1"'/im-out.png" 2> "'"$1"'/im.err"\
@@ -47,9 +47,9 @@ sed '"'"'s%.*%convert\\\
  -negate\\\
  -monochrome\\\
  -transparent white\\\
- -crop \\$((\&+1))x31+0+4\\\
+ -crop \\$((\&+1))x32+0+4\\\
  +repage\\\
- '"$1"'/signs_lib_font_31px_\2.png%'"'"'|\
+ '"$1"'/signs_lib_font_32px_\2.png%'"'"'|\
 sh -e -x"<'|
 sh|
 sh -e -x
