@@ -496,7 +496,7 @@ local function char_tex_wide(font_name, ch)
 	end
 end
 
-local function make_line_texture(line, lineno, pos, line_width, line_height, cwidth_tab, font_size, colorbgw, cwidth_tab_wide)
+local function make_line_texture(line, lineno, pos, line_width, line_height, cwidth_tab, font_size, colorbgw, cwidth_tab_wide, force_unicode_font)
 	local width = 0
 	local maxw = 0
 	local font_name = "signs_lib_font_"..font_size.."px"
@@ -536,6 +536,31 @@ local function make_line_texture(line, lineno, pos, line_width, line_height, cwi
 			local wide_type, wide_c = string.match(word:sub(i), "^&#([xu])(%x+);")
 			local c = word:sub(i, i)
 			local c2 = word:sub(i+1, i+1)
+
+			local wide_skip = 0
+			if force_unicode_font then
+				if wide_c then
+					wide_skip = #wide_c + 3
+					wide_type = "u"
+				elseif c:byte() < 0x80 or c:byte() >= 0xa0 then
+					wide_type = "u"
+					local uchar = AnsiToUtf8(c)
+					local code
+					if #uchar == 1 then
+						code = uchar:byte()
+					else
+						code = uchar:byte() % (2 ^ (7 - #uchar))
+						local j
+						for j = 1, #uchar do
+							code = code * (2 ^ 6) + uchar:byte(j) - 0x80
+						end
+					end
+					wide_c = string.format("%04x", code)
+				end
+			elseif wide_c then
+				wide_skip = #wide_c + 3
+			end
+
 			if c == "#" and c2 ~= "#" then
 				local cc = tonumber(c2, 16)
 				if cc then
@@ -543,9 +568,11 @@ local function make_line_texture(line, lineno, pos, line_width, line_height, cwi
 					cur_color = cc
 				end
 			elseif wide_c then
-				local w = font_size
+				local w
 				if wide_type == "x" then
 					w = cwidth_tab_wide[wide_c]
+				elseif wide_type == "u" and #wide_c <= 4 then
+					w = font_size
 				end
 				if w then
 					width = width + w + 1
@@ -564,6 +591,9 @@ local function make_line_texture(line, lineno, pos, line_width, line_height, cwi
 							local y = math.floor(code / 256)
 							tex = string.format(
 								"signs_lib_unifont.png\\^[sheet\\:256x256\\:%d,%d", x, y)
+							if font_size == 32 then
+								tex = tex .. "\\^[resize\\:32x32"
+							end
 						end
 						table.insert(chars, {
 							off = ch_offs,
@@ -573,7 +603,7 @@ local function make_line_texture(line, lineno, pos, line_width, line_height, cwi
 					end
 					ch_offs = ch_offs + w
 				end
-				i = i + #wide_c + 3
+				i = i + wide_skip
 			else
 				local w = cwidth_tab[c]
 				if w then
@@ -682,7 +712,8 @@ function signs_lib.make_sign_texture(lines, pos)
 	local lineno = 0
 	for i = 1, #lines do
 		if lineno >= def.number_of_lines then break end
-		local linetex, ln = make_line_texture(lines[i], lineno, pos, line_width, line_height, char_width, font_size, colorbgw, char_width_wide)
+		-- TODO force_unicode_font on during dev
+		local linetex, ln = make_line_texture(lines[i], lineno, pos, line_width, line_height, char_width, font_size, colorbgw, char_width_wide, true)
 		table.insert(texture, linetex)
 		lineno = ln + 1
 	end
