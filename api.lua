@@ -685,11 +685,8 @@ function signs_lib.make_sign_texture(lines, pos)
 	local char_width
 	local char_width_wide
 	local colorbgw
-	local widemult = 1
-
-	if meta:get_int("widefont") == 1 then
-		widemult = 0.5
-	end
+	local widemult = meta:get_int("widefont") == 1 and 0.5 or 1
+	local force_unicode_font = meta:get_int("unifont") == 1
 
 	if def.font_size and (def.font_size == 32 or def.font_size == 31) then
 		font_size = 32
@@ -712,8 +709,7 @@ function signs_lib.make_sign_texture(lines, pos)
 	local lineno = 0
 	for i = 1, #lines do
 		if lineno >= def.number_of_lines then break end
-		-- TODO force_unicode_font on during dev
-		local linetex, ln = make_line_texture(lines[i], lineno, pos, line_width, line_height, char_width, font_size, colorbgw, char_width_wide, true)
+		local linetex, ln = make_line_texture(lines[i], lineno, pos, line_width, line_height, char_width, font_size, colorbgw, char_width_wide, force_unicode_font)
 		table.insert(texture, linetex)
 		lineno = ln + 1
 	end
@@ -1313,20 +1309,23 @@ function get_sign_formspec(pos, nodename)
 
 	local meta = minetest.get_meta(pos)
 	local txt = meta:get_string("text")
+	local state = meta:get_int("unifont") == 1 and "on" or "off"
 
 	local formspec = {
 		"size[6,4]",
 		"background[-0.5,-0.5;7,5;signs_lib_sign_bg.png]",
 		"image[0.1,2.4;7,1;signs_lib_sign_color_palette.png]", 
 		"textarea[0.15,-0.2;6.3,2.8;text;;" .. minetest.formspec_escape(txt) .. "]",
-		"button_exit[3,3.4;2,1;ok;" .. S("Write") .. "]"
+		"button_exit[3.7,3.4;2,1;ok;" .. S("Write") .. "]",
+		"label[0.3,3.4;Unicode font]",
+		"image_button[0.6,3.7;1,0.6;signs_lib_switch_" .. state .. ".png;uni_"
+			.. state .. ";;;false;signs_lib_switch_interm.png]",
 	}
 
 	if minetest.registered_nodes[nodename].allow_widefont then
-		local state = "off"
-		if meta:get_int("widefont") == 1 then state = "on" end
-		formspec[#formspec+1] = "label[0.9,3.4;Use wide font]"
-		formspec[#formspec+1] = "image_button[1.1,3.7;1,0.6;signs_lib_switch_" .. state .. ".png;"
+		state = meta:get_int("widefont") == 1 and "on" or "off"
+		formspec[#formspec+1] = "label[2.1,3.4;Wide font]"
+		formspec[#formspec+1] = "image_button[2.3,3.7;1,0.6;signs_lib_switch_" .. state .. ".png;wide_"
 				.. state .. ";;;false;signs_lib_switch_interm.png]"
 	end
 
@@ -1349,23 +1348,40 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			pos_string
 		))
 		signs_lib.update_sign(pos, fields)
-	elseif fields.on or fields.off then
+	elseif fields.wide_on or fields.wide_off or fields.uni_on or fields.uni_off then
 		local node = minetest.get_node(pos)
 		local meta = minetest.get_meta(pos)
-		local change
+		local change_wide
+		local change_uni
 
-		if fields.on and meta:get_int("widefont") == 1 then
+		if fields.wide_on and meta:get_int("widefont") == 1 then
 			meta:set_int("widefont", 0)
-			change = true
-		elseif fields.off and meta:get_int("widefont") == 0 then
+			change_wide = true
+		elseif fields.wide_off and meta:get_int("widefont") == 0 then
 			meta:set_int("widefont", 1)
-			change = true
+			change_wide = true
+		end
+		if fields.uni_on and meta:get_int("unifont") == 1 then
+			meta:set_int("unifont", 0)
+			change_uni = true
+		elseif fields.uni_off and meta:get_int("unifont") == 0 then
+			meta:set_int("unifont", 1)
+			change_uni = true
 		end
 
-		if change then
+		if change_wide then
 			minetest.log("action", S("@1 flipped the wide-font switch to \"@2\" at @3",
 				(playername or ""),
-				(fields.on and "off" or "on"),
+				(fields.wide_on and "off" or "on"),
+				minetest.pos_to_string(pos)
+			))
+			signs_lib.update_sign(pos, fields)
+			minetest.show_formspec(playername, "signs_lib:sign", get_sign_formspec(pos, node.name))
+		end
+		if change_uni then
+			minetest.log("action", S("@1 flipped the unicode-font switch to \"@2\" at @3",
+				(playername or ""),
+				(fields.uni_on and "off" or "on"),
 				minetest.pos_to_string(pos)
 			))
 			signs_lib.update_sign(pos, fields)
