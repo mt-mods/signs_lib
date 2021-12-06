@@ -513,30 +513,36 @@ local function make_line_texture(line, lineno, pos, line_width, line_height, cwi
 	for word_i, word in ipairs(line) do
 		local chars = { }
 		local ch_offs = 0
-		word = string.gsub(word, "%^[12345678abcdefgh]", {
-			["^1"] = string.char(0x81),
-			["^2"] = string.char(0x82),
-			["^3"] = string.char(0x83),
-			["^4"] = string.char(0x84),
-			["^5"] = string.char(0x85),
-			["^6"] = string.char(0x86),
-			["^7"] = string.char(0x87),
-			["^8"] = string.char(0x88),
-			["^a"] = string.char(0x8a),
-			["^b"] = string.char(0x8b),
-			["^c"] = string.char(0x8c),
-			["^d"] = string.char(0x8d),
-			["^e"] = string.char(0x8e),
-			["^f"] = string.char(0x8f),
-			["^g"] = string.char(0x90),
-			["^h"] = string.char(0x91)
-		})
 		local word_l = #word
 		local i = 1
+		local escape = 0
 		while i <= word_l  do
 			local wide_type, wide_c = string.match(word:sub(i), "^&#([xu])(%x+);")
 			local c = word:sub(i, i)
 			local c2 = word:sub(i+1, i+1)
+
+			if escape > 0 then escape = escape - 1 end
+			if c == "^" and escape == 0 and c2:find("[1-8a-h]") then
+				c = ({
+					["1"] = string.char(0x81),
+					["2"] = string.char(0x82),
+					["3"] = string.char(0x83),
+					["4"] = string.char(0x84),
+					["5"] = string.char(0x85),
+					["6"] = string.char(0x86),
+					["7"] = string.char(0x87),
+					["8"] = string.char(0x88),
+					["a"] = string.char(0x8a),
+					["b"] = string.char(0x8b),
+					["c"] = string.char(0x8c),
+					["d"] = string.char(0x8d),
+					["e"] = string.char(0x8e),
+					["f"] = string.char(0x8f),
+					["g"] = string.char(0x90),
+					["h"] = string.char(0x91)
+				})[c2]
+				i = i + 1
+			end
 
 			local wide_skip = 0
 			if force_unicode_font then
@@ -562,11 +568,12 @@ local function make_line_texture(line, lineno, pos, line_width, line_height, cwi
 				wide_skip = #wide_c + 3
 			end
 
-			if c == "#" and c2 ~= "#" then
-				local cc = tonumber(c2, 16)
-				if cc then
+			if c == "#" and escape == 0 and c2:find("[0-9A-Fa-f#^]") then
+				if c2 == "#" or c2 == "^" then
+					escape = 2
+				else
 					i = i + 1
-					cur_color = cc
+					cur_color = tonumber(c2, 16)
 				end
 			elseif wide_c then
 				local w, code
@@ -754,7 +761,9 @@ local function make_infotext(text)
 	local lines = signs_lib.split_lines_and_words(text) or {}
 	local lines2 = { }
 	for _, line in ipairs(lines) do
-		table.insert(lines2, (table.concat(line, " "):gsub("#[0-9a-fA-F]", ""):gsub("##", "#")))
+		table.insert(lines2, (table.concat(line, " "):gsub("#[0-9a-fA-F#^]", function (s)
+			return s:sub(2):find("[#^]") and s:sub(2) or ""
+		end)))
 	end
 	return table.concat(lines2, "\n")
 end
