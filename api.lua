@@ -523,7 +523,7 @@ local function make_line_texture(line, lineno, pos, line_width, line_height, cwi
 
 			if escape > 0 then escape = escape - 1 end
 			if c == "^" and escape == 0 and c2:find("[1-8a-h]") then
-				c = string.char(tonumber(c2,18)+0x80))
+				c = string.char(tonumber(c2,18)+0x80)
 				i = i + 1
 			end
 
