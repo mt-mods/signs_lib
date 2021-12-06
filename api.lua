@@ -342,6 +342,7 @@ local TP = signs_lib.path .. "/textures"
 -- Font file formatter
 local CHAR_FILE = "%s_%02x.png"
 local CHAR_FILE_WIDE = "%s_%s.png"
+local UNIFONT_TEX = "signs_lib_uni%02x.png\\^[sheet\\:16x16\\:%d,%d"
 -- Fonts path
 local CHAR_PATH = TP .. "/" .. CHAR_FILE
 local CHAR_PATH_WIDE = TP .. "/" .. CHAR_FILE_WIDE
@@ -568,11 +569,15 @@ local function make_line_texture(line, lineno, pos, line_width, line_height, cwi
 					cur_color = cc
 				end
 			elseif wide_c then
-				local w
+				local w, code
 				if wide_type == "x" then
 					w = cwidth_tab_wide[wide_c]
 				elseif wide_type == "u" and #wide_c <= 4 then
 					w = font_size
+					code = tonumber(wide_c, 16)
+					if signs_lib.unifont_halfwidth[code] then
+						w = math.floor(w / 2)
+					end
 				end
 				if w then
 					width = width + w + 1
@@ -583,17 +588,17 @@ local function make_line_texture(line, lineno, pos, line_width, line_height, cwi
 					end
 					if #chars < MAX_INPUT_CHARS then
 						local tex
-						if wide_type == "x" then
-							tex = char_tex_wide(font_name, wide_c)
-						else
-							local code = tonumber(wide_c, 16)
-							local x = code % 256
-							local y = math.floor(code / 256)
-							tex = string.format(
-								"signs_lib_unifont.png\\^[sheet\\:256x256\\:%d,%d", x, y)
+						if wide_type == "u" then
+							local page = math.floor(code / 256)
+							local idx = code % 256
+							local x = idx % 16
+							local y = math.floor(idx / 16)
+							tex = UNIFONT_TEX:format(page, x, y)
 							if font_size == 32 then
 								tex = tex .. "\\^[resize\\:32x32"
 							end
+						else
+							tex = char_tex_wide(font_name, wide_c)
 						end
 						table.insert(chars, {
 							off = ch_offs,

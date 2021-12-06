@@ -331,3 +331,4 @@ function Utf8ToAnsi(s)
 end
 
 signs_lib.wide_character_codes = wide_character_codes
+signs_lib.unifont_halfwidth = dofile(signs_lib.path.."/unifont-halfwidth.lua")
