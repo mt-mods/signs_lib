@@ -523,24 +523,7 @@ local function make_line_texture(line, lineno, pos, line_width, line_height, cwi
 
 			if escape > 0 then escape = escape - 1 end
 			if c == "^" and escape == 0 and c2:find("[1-8a-h]") then
-				c = ({
-					["1"] = string.char(0x81),
-					["2"] = string.char(0x82),
-					["3"] = string.char(0x83),
-					["4"] = string.char(0x84),
-					["5"] = string.char(0x85),
-					["6"] = string.char(0x86),
-					["7"] = string.char(0x87),
-					["8"] = string.char(0x88),
-					["a"] = string.char(0x8a),
-					["b"] = string.char(0x8b),
-					["c"] = string.char(0x8c),
-					["d"] = string.char(0x8d),
-					["e"] = string.char(0x8e),
-					["f"] = string.char(0x8f),
-					["g"] = string.char(0x90),
-					["h"] = string.char(0x91)
-				})[c2]
+				c = string.char(tonumber(c2,18)+0x80))
 				i = i + 1
 			end
 
