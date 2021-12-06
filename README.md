@@ -30,6 +30,8 @@ That said, there are some basic text formatting options:
 
 * Most writable signs can display double-wide text by flipping a switch in the sign's formspec.
 
+* Support full Unicode Plane 0 charset (63000+ characters). The "Unicode font" switch on each sign can be turned on for a more consistent letter style in multilingual text.
+
 ## Sign placement and rotation notes
 
 * Pointing at a wall while placing will, of course, place the sign on the wall.
