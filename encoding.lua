@@ -237,7 +237,7 @@ local nmdc = {
 	[124] = "|"
 }
 
-function AnsiToUtf8(s)
+function signs_lib.AnsiToUtf8(s)
 	local r, b = ""
 	for i = 1, s and s:len() or 0 do
 		b = s:byte(i)
@@ -258,7 +258,7 @@ function AnsiToUtf8(s)
 	return r
 end
 
-function Utf8ToAnsi(s)
+function signs_lib.Utf8ToAnsi(s)
 	local r, b = ""
 	local scope
 	local j, l, u
