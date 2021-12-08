@@ -149,9 +149,11 @@ In this text, common terms such as `pos`, `node`, or `placer`/`digger` will not 
 
   * `font_size = int`
 
-    Selects which font to use, either 15 or 31 (pixel height).  This setting directly affects the sign's vertical resolution.
+    Selects which font to use, either 16 or 32 (pixel height).  This setting directly affects the sign's vertical resolution.
 
-    Default: 15
+    Default: 16
+
+    Note: Valid values were formerly 15 and 31, these are now aliases of 16 and 32 respectively.
 
   * `x_offset = int`
   * `y_offset = int`

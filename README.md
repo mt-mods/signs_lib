@@ -22,9 +22,15 @@ That said, there are some basic text formatting options:
 
   Writing "^" followed by a letter "a" through "h" will produce double-wide versions of these arrows, in the same order.  These wide arrows occupy 0x89 to 0x91 in the character set.
 
-* A color may be specified in the sign text by using "#" followed by a single hexadcimal digit (0-9 or a-f).  These colors come from the standard Linux/IRC/CGA color set, and are shown in the sign's formspec.  Any color change will remain in effect until changed again, or until the next line break.  Any number of color changes in any arbitrary arrangement is allowed. To write "#" on a sign, write "##".
+  To write a "^" on a sign, wirte "#^"
+
+* A color may be specified in the sign text by using "#" followed by a single hexadcimal digit (0-9 or a-f).  These colors come from the standard Linux/IRC/CGA color set, and are shown in the sign's formspec.  Any color change will remain in effect until changed again, or until the next line break.  Any number of color changes in any arbitrary arrangement is allowed.
+
+  To write "#" on a sign, write "##".
 
 * Most writable signs can display double-wide text by flipping a switch in the sign's formspec.
+
+* Support full Unicode Plane 0 charset (63000+ characters). The "Unicode font" switch on each sign can be turned on for a more consistent letter style in multilingual text.
 
 ## Sign placement and rotation notes
 

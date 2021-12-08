@@ -16,7 +16,7 @@ signs_lib.standard_lines = 6
 signs_lib.standard_hscale = 1
 signs_lib.standard_vscale = 1
 signs_lib.standard_lspace = 1
-signs_lib.standard_fsize = 15
+signs_lib.standard_fsize = 16
 signs_lib.standard_xoffs = 4
 signs_lib.standard_yoffs = 0
 signs_lib.standard_cpl = 35
@@ -342,6 +342,7 @@ local TP = signs_lib.path .. "/textures"
 -- Font file formatter
 local CHAR_FILE = "%s_%02x.png"
 local CHAR_FILE_WIDE = "%s_%s.png"
+local UNIFONT_TEX = "signs_lib_uni%02x.png\\^[sheet\\:16x16\\:%d,%d"
 -- Fonts path
 local CHAR_PATH = TP .. "/" .. CHAR_FILE
 local CHAR_PATH_WIDE = TP .. "/" .. CHAR_FILE_WIDE
@@ -435,17 +436,17 @@ local function build_char_db(font_size)
 	return cw, cbw, cbh, (total_width / char_count), cw_wide
 end
 
-signs_lib.charwidth15,
-signs_lib.colorbgw15,
-signs_lib.lineheight15,
-signs_lib.avgwidth15,
-signs_lib.charwidth_wide15 = build_char_db(15)
+signs_lib.charwidth16,
+signs_lib.colorbgw16,
+signs_lib.lineheight16,
+signs_lib.avgwidth16,
+signs_lib.charwidth_wide16 = build_char_db(16)
 
-signs_lib.charwidth31,
-signs_lib.colorbgw31,
-signs_lib.lineheight31,
-signs_lib.avgwidth31,
-signs_lib.charwidth_wide31 = build_char_db(31)
+signs_lib.charwidth32,
+signs_lib.colorbgw32,
+signs_lib.lineheight32,
+signs_lib.avgwidth32,
+signs_lib.charwidth_wide32 = build_char_db(32)
 
 local sign_groups = {choppy=2, dig_immediate=2}
 local fences_with_sign = { }
@@ -496,7 +497,7 @@ local function char_tex_wide(font_name, ch)
 	end
 end
 
-local function make_line_texture(line, lineno, pos, line_width, line_height, cwidth_tab, font_size, colorbgw, cwidth_tab_wide)
+local function make_line_texture(line, lineno, pos, line_width, line_height, cwidth_tab, font_size, colorbgw, cwidth_tab_wide, force_unicode_font)
 	local width = 0
 	local maxw = 0
 	local font_name = "signs_lib_font_"..font_size.."px"
@@ -512,58 +513,62 @@ local function make_line_texture(line, lineno, pos, line_width, line_height, cwi
 	for word_i, word in ipairs(line) do
 		local chars = { }
 		local ch_offs = 0
-		word = string.gsub(word, "%^[12345678abcdefgh]", {
-			["^1"] = string.char(0x81),
-			["^2"] = string.char(0x82),
-			["^3"] = string.char(0x83),
-			["^4"] = string.char(0x84),
-			["^5"] = string.char(0x85),
-			["^6"] = string.char(0x86),
-			["^7"] = string.char(0x87),
-			["^8"] = string.char(0x88),
-			["^a"] = string.char(0x8a),
-			["^b"] = string.char(0x8b),
-			["^c"] = string.char(0x8c),
-			["^d"] = string.char(0x8d),
-			["^e"] = string.char(0x8e),
-			["^f"] = string.char(0x8f),
-			["^g"] = string.char(0x90),
-			["^h"] = string.char(0x91)
-		})
 		local word_l = #word
 		local i = 1
+		local escape = 0
 		while i <= word_l  do
-			local wide_c
-			if "&#x" == word:sub(i, i + 2) then
-				local j = i + 3
-				local collected = ""
-				while j <= word_l do
-					local c = word:sub(j, j)
-					if c == ";" then
-						wide_c = collected
-						break
-					elseif c < "0" then
-						break
-					elseif "f" < c then
-						break
-					elseif ("9" < c) and (c < "a") then
-						break
-					else
-						collected = collected .. c
-						j = j + 1
-					end
-				end
-			end
+			local wide_type, wide_c = string.match(word:sub(i), "^&#([xu])(%x+);")
 			local c = word:sub(i, i)
 			local c2 = word:sub(i+1, i+1)
-			if c == "#" and c2 ~= "#" then
-				local cc = tonumber(c2, 16)
-				if cc then
-					i = i + 1
-					cur_color = cc
+
+			if escape > 0 then escape = escape - 1 end
+			if c == "^" and escape == 0 and c2:find("[1-8a-h]") then
+				c = string.char(tonumber(c2,18)+0x80)
+				i = i + 1
+			end
+
+			local wide_skip = 0
+			if force_unicode_font then
+				if wide_c then
+					wide_skip = #wide_c + 3
+					wide_type = "u"
+				elseif c:byte() < 0x80 or c:byte() >= 0xa0 then
+					wide_type = "u"
+					local uchar = AnsiToUtf8(c)
+					local code
+					if #uchar == 1 then
+						code = uchar:byte()
+					else
+						code = uchar:byte() % (2 ^ (7 - #uchar))
+						local j
+						for j = 1, #uchar do
+							code = code * (2 ^ 6) + uchar:byte(j) - 0x80
+						end
+					end
+					wide_c = string.format("%04x", code)
 				end
 			elseif wide_c then
-				local w = cwidth_tab_wide[wide_c]
+				wide_skip = #wide_c + 3
+			end
+
+			if c == "#" and escape == 0 and c2:find("[0-9A-Fa-f#^]") then
+				if c2 == "#" or c2 == "^" then
+					escape = 2
+				else
+					i = i + 1
+					cur_color = tonumber(c2, 16)
+				end
+			elseif wide_c then
+				local w, code
+				if wide_type == "x" then
+					w = cwidth_tab_wide[wide_c]
+				elseif wide_type == "u" and #wide_c <= 4 then
+					w = font_size
+					code = tonumber(wide_c, 16)
+					if signs_lib.unifont_halfwidth[code] then
+						w = math.floor(w / 2)
+					end
+				end
 				if w then
 					width = width + w + 1
 					if width >= (line_width - cwidth_tab[" "]) then
@@ -572,15 +577,28 @@ local function make_line_texture(line, lineno, pos, line_width, line_height, cwi
 						maxw = math_max(width, maxw)
 					end
 					if #chars < MAX_INPUT_CHARS then
+						local tex
+						if wide_type == "u" then
+							local page = math.floor(code / 256)
+							local idx = code % 256
+							local x = idx % 16
+							local y = math.floor(idx / 16)
+							tex = UNIFONT_TEX:format(page, x, y)
+							if font_size == 32 then
+								tex = tex .. "\\^[resize\\:32x32"
+							end
+						else
+							tex = char_tex_wide(font_name, wide_c)
+						end
 						table.insert(chars, {
 							off = ch_offs,
-							tex = char_tex_wide(font_name, wide_c),
+							tex = tex,
 							col = ("%X"):format(cur_color),
 						})
 					end
 					ch_offs = ch_offs + w
 				end
-				i = i + #wide_c + 3
+				i = i + wide_skip
 			else
 				local w = cwidth_tab[c]
 				if w then
@@ -662,26 +680,23 @@ function signs_lib.make_sign_texture(lines, pos)
 	local char_width
 	local char_width_wide
 	local colorbgw
-	local widemult = 1
+	local widemult = meta:get_int("widefont") == 1 and 0.5 or 1
+	local force_unicode_font = meta:get_int("unifont") == 1
 
-	if meta:get_int("widefont") == 1 then
-		widemult = 0.5
-	end
-
-	if def.font_size and def.font_size == 31 then
-		font_size = 31
-		line_width = math.floor(signs_lib.avgwidth31 * def.chars_per_line) * (def.horiz_scaling * widemult)
-		line_height = signs_lib.lineheight31
-		char_width = signs_lib.charwidth31
-		char_width_wide = signs_lib.charwidth_wide31
-		colorbgw = signs_lib.colorbgw31
+	if def.font_size and (def.font_size == 32 or def.font_size == 31) then
+		font_size = 32
+		line_width = math.floor(signs_lib.avgwidth32 * def.chars_per_line) * (def.horiz_scaling * widemult)
+		line_height = signs_lib.lineheight32
+		char_width = signs_lib.charwidth32
+		char_width_wide = signs_lib.charwidth_wide32
+		colorbgw = signs_lib.colorbgw32
 	else
-		font_size = 15
-		line_width = math.floor(signs_lib.avgwidth15 * def.chars_per_line) * (def.horiz_scaling * widemult)
-		line_height = signs_lib.lineheight15
-		char_width = signs_lib.charwidth15
-		char_width_wide = signs_lib.charwidth_wide15
-		colorbgw = signs_lib.colorbgw15
+		font_size = 16
+		line_width = math.floor(signs_lib.avgwidth16 * def.chars_per_line) * (def.horiz_scaling * widemult)
+		line_height = signs_lib.lineheight16
+		char_width = signs_lib.charwidth16
+		char_width_wide = signs_lib.charwidth_wide16
+		colorbgw = signs_lib.colorbgw16
 	end
 
 	local texture = { ("[combine:%dx%d"):format(line_width, (line_height + def.line_spacing) * def.number_of_lines * def.vert_scaling) }
@@ -689,7 +704,7 @@ function signs_lib.make_sign_texture(lines, pos)
 	local lineno = 0
 	for i = 1, #lines do
 		if lineno >= def.number_of_lines then break end
-		local linetex, ln = make_line_texture(lines[i], lineno, pos, line_width, line_height, char_width, font_size, colorbgw, char_width_wide)
+		local linetex, ln = make_line_texture(lines[i], lineno, pos, line_width, line_height, char_width, font_size, colorbgw, char_width_wide, force_unicode_font)
 		table.insert(texture, linetex)
 		lineno = ln + 1
 	end
@@ -729,7 +744,9 @@ local function make_infotext(text)
 	local lines = signs_lib.split_lines_and_words(text) or {}
 	local lines2 = { }
 	for _, line in ipairs(lines) do
-		table.insert(lines2, (table.concat(line, " "):gsub("#[0-9a-fA-F]", ""):gsub("##", "#")))
+		table.insert(lines2, (table.concat(line, " "):gsub("#[0-9a-fA-F#^]", function (s)
+			return s:sub(2):find("[#^]") and s:sub(2) or ""
+		end)))
 	end
 	return table.concat(lines2, "\n")
 end
@@ -1289,20 +1306,23 @@ function get_sign_formspec(pos, nodename)
 
 	local meta = minetest.get_meta(pos)
 	local txt = meta:get_string("text")
+	local state = meta:get_int("unifont") == 1 and "on" or "off"
 
 	local formspec = {
 		"size[6,4]",
 		"background[-0.5,-0.5;7,5;signs_lib_sign_bg.png]",
 		"image[0.1,2.4;7,1;signs_lib_sign_color_palette.png]", 
 		"textarea[0.15,-0.2;6.3,2.8;text;;" .. minetest.formspec_escape(txt) .. "]",
-		"button_exit[3,3.4;2,1;ok;" .. S("Write") .. "]"
+		"button_exit[3.7,3.4;2,1;ok;" .. S("Write") .. "]",
+		"label[0.3,3.4;Unicode font]",
+		"image_button[0.6,3.7;1,0.6;signs_lib_switch_" .. state .. ".png;uni_"
+			.. state .. ";;;false;signs_lib_switch_interm.png]",
 	}
 
 	if minetest.registered_nodes[nodename].allow_widefont then
-		local state = "off"
-		if meta:get_int("widefont") == 1 then state = "on" end
-		formspec[#formspec+1] = "label[0.9,3.4;Use wide font]"
-		formspec[#formspec+1] = "image_button[1.1,3.7;1,0.6;signs_lib_switch_" .. state .. ".png;"
+		state = meta:get_int("widefont") == 1 and "on" or "off"
+		formspec[#formspec+1] = "label[2.1,3.4;Wide font]"
+		formspec[#formspec+1] = "image_button[2.3,3.7;1,0.6;signs_lib_switch_" .. state .. ".png;wide_"
 				.. state .. ";;;false;signs_lib_switch_interm.png]"
 	end
 
@@ -1325,23 +1345,40 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			pos_string
 		))
 		signs_lib.update_sign(pos, fields)
-	elseif fields.on or fields.off then
+	elseif fields.wide_on or fields.wide_off or fields.uni_on or fields.uni_off then
 		local node = minetest.get_node(pos)
 		local meta = minetest.get_meta(pos)
-		local change
+		local change_wide
+		local change_uni
 
-		if fields.on and meta:get_int("widefont") == 1 then
+		if fields.wide_on and meta:get_int("widefont") == 1 then
 			meta:set_int("widefont", 0)
-			change = true
-		elseif fields.off and meta:get_int("widefont") == 0 then
+			change_wide = true
+		elseif fields.wide_off and meta:get_int("widefont") == 0 then
 			meta:set_int("widefont", 1)
-			change = true
+			change_wide = true
+		end
+		if fields.uni_on and meta:get_int("unifont") == 1 then
+			meta:set_int("unifont", 0)
+			change_uni = true
+		elseif fields.uni_off and meta:get_int("unifont") == 0 then
+			meta:set_int("unifont", 1)
+			change_uni = true
 		end
 
-		if change then
+		if change_wide then
 			minetest.log("action", S("@1 flipped the wide-font switch to \"@2\" at @3",
 				(playername or ""),
-				(fields.on and "off" or "on"),
+				(fields.wide_on and "off" or "on"),
+				minetest.pos_to_string(pos)
+			))
+			signs_lib.update_sign(pos, fields)
+			minetest.show_formspec(playername, "signs_lib:sign", get_sign_formspec(pos, node.name))
+		end
+		if change_uni then
+			minetest.log("action", S("@1 flipped the unicode-font switch to \"@2\" at @3",
+				(playername or ""),
+				(fields.uni_on and "off" or "on"),
 				minetest.pos_to_string(pos)
 			))
 			signs_lib.update_sign(pos, fields)
