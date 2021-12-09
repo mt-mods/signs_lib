@@ -255,8 +255,7 @@ end
 
 function signs_lib.set_obj_text(pos, text, glow)
 	local split = signs_lib.split_lines_and_words
-	local text_ansi = Utf8ToAnsi(text)
-	local n = minetest.registered_nodes[minetest.get_node(pos).name]
+	local text_ansi = signs_lib.Utf8ToAnsi(text)
 	signs_lib.delete_objects(pos)
 	-- only create sign entity for actual text
 	if text_ansi and text_ansi ~= "" then
@@ -448,8 +447,6 @@ signs_lib.lineheight32,
 signs_lib.avgwidth32,
 signs_lib.charwidth_wide32 = build_char_db(32)
 
-local sign_groups = {choppy=2, dig_immediate=2}
-local fences_with_sign = { }
 
 -- some local helper functions
 
@@ -471,7 +468,8 @@ local function char_tex(font_name, ch)
 		return ctexcache[font_name..ch], true
 	else
 		local c = ch:byte()
-		local exists, tex = file_exists(CHAR_PATH:format(font_name, c))
+		local exists = file_exists(CHAR_PATH:format(font_name, c))
+		local tex
 		if exists and c ~= 14 then
 			tex = CHAR_FILE:format(font_name, c)
 		else
@@ -486,7 +484,8 @@ local function char_tex_wide(font_name, ch)
 	if ctexcache_wide[font_name..ch] then
 		return ctexcache_wide[font_name..ch], true
 	else
-		local exists, tex = file_exists(CHAR_PATH_WIDE:format(font_name, ch))
+		local exists = file_exists(CHAR_PATH_WIDE:format(font_name, ch))
+		local tex
 		if exists then
 			tex = CHAR_FILE_WIDE:format(font_name, ch)
 		else
@@ -534,13 +533,12 @@ local function make_line_texture(line, lineno, pos, line_width, line_height, cwi
 					wide_type = "u"
 				elseif c:byte() < 0x80 or c:byte() >= 0xa0 then
 					wide_type = "u"
-					local uchar = AnsiToUtf8(c)
+					local uchar = signs_lib.AnsiToUtf8(c)
 					local code
 					if #uchar == 1 then
 						code = uchar:byte()
 					else
 						code = uchar:byte() % (2 ^ (7 - #uchar))
-						local j
 						for j = 1, #uchar do
 							code = code * (2 ^ 6) + uchar:byte(j) - 0x80
 						end
@@ -910,10 +908,6 @@ function signs_lib.after_place_node(pos, placer, itemstack, pointed_thing, locke
 
 	local def = minetest.registered_items[signname]
 
-	local ppos = minetest.get_pointed_thing_position(pointed_thing)
-	local pnode = minetest.get_node(ppos)
-	local pdef = minetest.registered_items[pnode.name]
-
 	if def.allow_onpole and signs_lib.check_for_pole(pos, pointed_thing) and not controls.sneak then
 		local newparam2
 		local lookdir = minetest.yaw_to_dir(placer:get_look_horizontal())
@@ -922,7 +916,6 @@ function signs_lib.after_place_node(pos, placer, itemstack, pointed_thing, locke
 		else
 			newparam2 = minetest.dir_to_facedir(lookdir)
 		end
-		local node = minetest.get_node(pos)
 		minetest.swap_node(pos, {name = no_wall_name.."_onpole", param2 = newparam2})
 	elseif def.allow_onpole_horizontal and signs_lib.check_for_horizontal_pole(pos, pointed_thing) and not controls.sneak then
 		local newparam2
@@ -932,15 +925,12 @@ function signs_lib.after_place_node(pos, placer, itemstack, pointed_thing, locke
 		else
 			newparam2 = minetest.dir_to_facedir(lookdir)
 		end
-		local node = minetest.get_node(pos)
 		minetest.swap_node(pos, {name = no_wall_name.."_onpole_horiz", param2 = newparam2})
 	elseif def.allow_hanging and signs_lib.check_for_ceiling(pointed_thing) and not controls.sneak then
 		local newparam2 = minetest.dir_to_facedir(placer:get_look_dir())
-		local node = minetest.get_node(pos)
 		minetest.swap_node(pos, {name = no_wall_name.."_hanging", param2 = newparam2})
 	elseif def.allow_yard and signs_lib.check_for_floor(pointed_thing) and not controls.sneak then
 		local newparam2 = minetest.dir_to_facedir(placer:get_look_dir())
-		local node = minetest.get_node(pos)
 		minetest.swap_node(pos, {name = no_wall_name.."_yard", param2 = newparam2})
 	elseif def.paramtype2 == "facedir" and signs_lib.check_for_ceiling(pointed_thing) then
 		minetest.swap_node(pos, {name = signname, param2 = 6})
@@ -1242,7 +1232,7 @@ minetest.register_lbm({
 	run_at_every_load = true,
 	action = function(pos, node)
 		-- yeah, yeah... I know I'm hashing a block pos, but it's still just a set of coords
-		local hash = minetest.hash_node_position(vector.floor(vector.divide(pos, core.MAP_BLOCKSIZE)))
+		local hash = minetest.hash_node_position(vector.floor(vector.divide(pos, minetest.MAP_BLOCKSIZE)))
 		if not signs_lib.block_list[hash] then
 			signs_lib.block_list[hash] = true
 			signs_lib.totalblocks = signs_lib.totalblocks + 1
@@ -1259,9 +1249,9 @@ minetest.register_chatcommand("regen_signs", {
 		local totalsigns = 0
 		for b in pairs(signs_lib.block_list) do
 			local blockpos = minetest.get_position_from_hash(b)
-			local pos1 = vector.multiply(blockpos, core.MAP_BLOCKSIZE)
-			local pos2 = vector.add(pos1, core.MAP_BLOCKSIZE - 1)
-			if minetest.get_node_or_nil(vector.add(pos1, core.MAP_BLOCKSIZE/2)) then
+			local pos1 = vector.multiply(blockpos, minetest.MAP_BLOCKSIZE)
+			local pos2 = vector.add(pos1, minetest.MAP_BLOCKSIZE - 1)
+			if minetest.get_node_or_nil(vector.add(pos1, minetest.MAP_BLOCKSIZE/2)) then
 				local signs_in_block = minetest.find_nodes_in_area(pos1, pos2, {"group:sign"})
 				allsigns[#allsigns + 1] = signs_in_block
 				totalsigns = totalsigns + #signs_in_block
@@ -1311,7 +1301,7 @@ function get_sign_formspec(pos, nodename)
 	local formspec = {
 		"size[6,4]",
 		"background[-0.5,-0.5;7,5;signs_lib_sign_bg.png]",
-		"image[0.1,2.4;7,1;signs_lib_sign_color_palette.png]", 
+		"image[0.1,2.4;7,1;signs_lib_sign_color_palette.png]",
 		"textarea[0.15,-0.2;6.3,2.8;text;;" .. minetest.formspec_escape(txt) .. "]",
 		"button_exit[3.7,3.4;2,1;ok;" .. S("Write") .. "]",
 		"label[0.3,3.4;Unicode font]",
