@@ -278,7 +278,7 @@ function signs_lib.Utf8ToAnsi(s)
 			if scope[b] then
 				scope = scope[b]
 				if "string" == type(scope) then
-					r, scope = r .. scope
+					r, scope = r .. scope, nil
 					j = -1 -- supress general UTF-8 parser
 				end
 			else
@@ -290,11 +290,11 @@ function signs_lib.Utf8ToAnsi(s)
 
 		-- general UTF-8 parser
 		if j == -1 then -- supressed by legacy parser
-			j, l, u = nil
+			j = nil
 		elseif b < 0x80 then
 			if j then
 				r = r .. "&#ufffd;"
-				j, l, u = nil
+				j = nil
 			end
 			-- ASCII handled by legacy parser
 		elseif b >= 0xc0 then
@@ -304,7 +304,7 @@ function signs_lib.Utf8ToAnsi(s)
 			j = i
 			if b >= 0xf8 then
 				r = r .. "&#ufffd;"
-				j, l, u = nil
+				j = nil
 			elseif b >= 0xf0 then
 				l, u = 4, b % (2 ^ 3)
 			elseif b >= 0xe0 then
@@ -317,7 +317,7 @@ function signs_lib.Utf8ToAnsi(s)
 				u = u * (2 ^ 6) + b % (2 ^ 6)
 				if i == j + l - 1 then
 					r = r .. string.format("&#u%x;", u)
-					j, l, u = nil
+					j = nil
 				end
 			else
 				r = r .. "&#ufffd;"
