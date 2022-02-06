@@ -21,16 +21,16 @@ signs_lib.standard_xoffs = 4
 signs_lib.standard_yoffs = 0
 signs_lib.standard_cpl = 35
 
-signs_lib.standard_wood_groups = table.copy(minetest.registered_items["default:sign_wall_wood"].groups)
+signs_lib.standard_wood_groups = table.copy(default and minetest.registered_items["default:sign_wall_wood"].groups or {})
 signs_lib.standard_wood_groups.sign = 1
 signs_lib.standard_wood_groups.attached_node = nil
 
-signs_lib.standard_steel_groups = table.copy(minetest.registered_items["default:sign_wall_steel"].groups)
+signs_lib.standard_steel_groups = table.copy(default and minetest.registered_items["default:sign_wall_steel"].groups or {})
 signs_lib.standard_steel_groups.sign = 1
 signs_lib.standard_steel_groups.attached_node = nil
 
-signs_lib.standard_wood_sign_sounds  = table.copy(minetest.registered_items["default:sign_wall_wood"].sounds)
-signs_lib.standard_steel_sign_sounds = table.copy(minetest.registered_items["default:sign_wall_steel"].sounds)
+signs_lib.standard_wood_sign_sounds  = table.copy(default and minetest.registered_items["default:sign_wall_wood"].sounds or {})
+signs_lib.standard_steel_sign_sounds = table.copy(default and minetest.registered_items["default:sign_wall_steel"].sounds or {})
 
 signs_lib.default_text_scale = {x=10, y=10}
 

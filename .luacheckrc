@@ -9,8 +9,8 @@ globals = {
 read_globals = {
 	-- Builtin
 	table = {fields = {"copy"}},
-	"ItemStack", "vector",
-	
+	"ItemStack", "vector", "default",
+
 	-- Mod deps
 	"intllib",
 	"screwdriver",
