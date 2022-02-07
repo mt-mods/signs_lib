@@ -1,16 +1,17 @@
+if minetest.get_modpath("default") then
+	local default_fences = {
+		"default:fence_wood",
+		"default:fence_acacia_wood",
+		"default:fence_aspen_wood",
+		"default:fence_junglewood",
+		"default:fence_pine_wood"
+	}
 
-local default_fences = {
-	"default:fence_wood",
-	"default:fence_acacia_wood",
-	"default:fence_aspen_wood",
-	"default:fence_junglewood",
-	"default:fence_pine_wood"
-}
-
-for _, n in ipairs(default_fences) do
-	minetest.override_item(n, {
-		check_for_pole = true
-	})
+	for _, n in ipairs(default_fences) do
+		minetest.override_item(n, {
+			check_for_pole = true
+		})
+	end
 end
 
 if minetest.get_modpath("cottages") then
