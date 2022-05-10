@@ -167,7 +167,13 @@ minetest.register_entity("signs_lib:text", {
 	mesh = "signs_lib_standard_sign_entity_wall.obj",
 	textures = {},
 	static_save = true,
-	backface_culling = false
+	backface_culling = false,
+	on_activate = function(self)
+		local node = minetest.get_node(self.object:get_pos())
+		if minetest.get_item_group(node.name, "sign") == 0 then
+			self.object:remove()
+		end
+	end,
 })
 
 function signs_lib.delete_objects(pos)
