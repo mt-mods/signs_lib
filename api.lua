@@ -22,11 +22,9 @@ signs_lib.standard_yoffs = 0
 signs_lib.standard_cpl = 35
 
 signs_lib.standard_wood_groups = table.copy(default and minetest.registered_items["default:sign_wall_wood"].groups or {})
-signs_lib.standard_wood_groups.sign = 1
 signs_lib.standard_wood_groups.attached_node = nil
 
 signs_lib.standard_steel_groups = table.copy(default and minetest.registered_items["default:sign_wall_steel"].groups or {})
-signs_lib.standard_steel_groups.sign = 1
 signs_lib.standard_steel_groups.attached_node = nil
 
 signs_lib.standard_wood_sign_sounds  = table.copy(default and minetest.registered_items["default:sign_wall_wood"].sounds or {})
@@ -1028,6 +1026,9 @@ function signs_lib.register_sign(name, raw_def)
 	else
 		def.groups = signs_lib.standard_wood_groups
 	end
+
+	-- force all signs into the sign group
+	def.groups.sign = def.groups.sign or 1
 
 	local cbox = signs_lib.make_selection_boxes(35, 25)
 
