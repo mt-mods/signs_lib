@@ -12,6 +12,5 @@ read_globals = {
 	"ItemStack", "vector", "default",
 
 	-- Mod deps
-	"intllib",
 	"screwdriver",
 }

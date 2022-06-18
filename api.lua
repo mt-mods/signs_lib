@@ -1,6 +1,6 @@
 -- signs_lib api, backported from street_signs
 
-local S = signs_lib.gettext
+local S = minetest.get_translator(minetest.get_current_modname())
 
 local function get_sign_formspec() end
 
