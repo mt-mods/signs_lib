@@ -1,6 +1,6 @@
 -- signs_lib api, backported from street_signs
 
-local S = signs_lib.gettext
+local S = signs_lib.S
 
 local function get_sign_formspec() end
 
