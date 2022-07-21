@@ -236,7 +236,7 @@ signs_lib.register_sign("basic_signs:sign_wall_glass", {
 	allow_onpole = true,
 	allow_onpole_horizontal = true,
 	allow_yard = true,
-	use_texture_alpha = true,
+	use_texture_alpha = "blend",
 })
 ```
 
