@@ -172,6 +172,9 @@ minetest.register_entity("signs_lib:text", {
 			self.object:remove()
 		end
 	end,
+	on_blast = function(self, damage)
+		return false, false, {}
+	end,
 })
 
 function signs_lib.delete_objects(pos)
