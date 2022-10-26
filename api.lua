@@ -750,7 +750,6 @@ function signs_lib.blast_sign(pos, intensity)
 		local node = minetest.get_node(pos)
 		local drops = minetest.get_node_drops(node, "tnt:blast")
 		minetest.remove_node(pos)
-		signs_lib.destruct_sign(pos)
 		return drops
 	end
 end
