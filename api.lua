@@ -745,6 +745,16 @@ function signs_lib.destruct_sign(pos)
 	signs_lib.delete_objects(pos)
 end
 
+function signs_lib.blast_sign(pos, intensity)
+	if signs_lib.can_modify(pos, "") then
+		local node = minetest.get_node(pos)
+		local drops = minetest.get_node_drops(node, "tnt:blast")
+		minetest.remove_node(pos)
+		signs_lib.destruct_sign(pos)
+		return drops
+	end
+end
+
 local function make_infotext(text)
 	text = trim_input(text)
 	local lines = signs_lib.split_lines_and_words(text) or {}
@@ -806,7 +816,16 @@ end
 function signs_lib.can_modify(pos, player)
 	local meta = minetest.get_meta(pos)
 	local owner = meta:get_string("owner")
-	local playername = player:get_player_name()
+	local playername
+	if type(player) == "userdata" then
+		playername = player:get_player_name()
+
+	elseif type(player) == "string" then
+		playername = player
+
+	else
+		playername = ""
+	end
 
 	if minetest.is_protected(pos, playername) then
 		minetest.record_protection_violation(pos, playername)
@@ -987,6 +1006,7 @@ function signs_lib.register_sign(name, raw_def)
 	end
 
 	def.after_place_node = raw_def.after_place_node or signs_lib.after_place_node
+	def.on_blast         = raw_def.on_blast         or signs_lib.blast_sign
 
 	if raw_def.entity_info then
 
