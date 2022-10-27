@@ -812,7 +812,7 @@ function signs_lib.can_modify(pos, player)
 
 	if owner == ""
 	  or playername == owner
-	  or (minetest.check_player_privs(playername, {signslib_edit=true}))
+	  or minetest.get_player_privs(playername)[signs_lib.edit_priv]
 	  or (playername == minetest.settings:get("name")) then
 		return true
 	end
@@ -1292,7 +1292,11 @@ minetest.register_chatcommand("regen_signs", {
 	end
 })
 
-minetest.register_privilege("signslib_edit", {})
+minetest.register_on_mods_loaded(function()
+	if not minetest.registered_privileges[signs_lib.edit_priv] then
+		minetest.register_privilege("signslib_edit", {})
+	end
+end)
 
 
 
