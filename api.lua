@@ -1,6 +1,7 @@
 -- signs_lib api, backported from street_signs
 
 local S = signs_lib.S
+local has_default_mod = minetest.get_modpath("default")
 
 local function get_sign_formspec() end
 
@@ -21,14 +22,14 @@ signs_lib.standard_xoffs = 4
 signs_lib.standard_yoffs = 0
 signs_lib.standard_cpl = 35
 
-signs_lib.standard_wood_groups = table.copy(default and minetest.registered_items["default:sign_wall_wood"].groups or {})
+signs_lib.standard_wood_groups = table.copy(has_default_mod and minetest.registered_items["default:sign_wall_wood"].groups or {})
 signs_lib.standard_wood_groups.attached_node = nil
 
-signs_lib.standard_steel_groups = table.copy(default and minetest.registered_items["default:sign_wall_steel"].groups or {})
+signs_lib.standard_steel_groups = table.copy(has_default_mod and minetest.registered_items["default:sign_wall_steel"].groups or {})
 signs_lib.standard_steel_groups.attached_node = nil
 
-signs_lib.standard_wood_sign_sounds  = table.copy(default and minetest.registered_items["default:sign_wall_wood"].sounds or {})
-signs_lib.standard_steel_sign_sounds = table.copy(default and minetest.registered_items["default:sign_wall_steel"].sounds or {})
+signs_lib.standard_wood_sign_sounds  = table.copy(has_default_mod and minetest.registered_items["default:sign_wall_wood"].sounds or {})
+signs_lib.standard_steel_sign_sounds = table.copy(has_default_mod and minetest.registered_items["default:sign_wall_steel"].sounds or {})
 
 signs_lib.default_text_scale = {x=10, y=10}
 
