@@ -977,7 +977,7 @@ function signs_lib.after_place_node(pos, placer, itemstack, pointed_thing, locke
 end
 
 function signs_lib.register_fence_with_sign()
-	log("warning", "[signs_lib] Attempt to call no longer used function signs_lib.register_fence_with_sign()")
+	log("warning", "Attempt to call no longer used function signs_lib.register_fence_with_sign()")
 end
 
 local use_glow = function(pos, node, puncher, pointed_thing)
