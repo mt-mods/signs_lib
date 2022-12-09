@@ -1,11 +1,10 @@
 -- signs_lib api, backported from street_signs
 
-local f = string.format
 local S = signs_lib.S
 local has_default_mod = minetest.get_modpath("default")
 
 local function log(level, messagefmt, ...)
-	minetest.log(level, "[signs_lib] " .. f(messagefmt, ...))
+	minetest.log(level, "[signs_lib] " .. messagefmt:format(...))
 end
 
 local function get_sign_formspec() end
