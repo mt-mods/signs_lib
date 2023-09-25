@@ -166,7 +166,6 @@ local ctexcache_wide = {}
 -- entity handling
 
 minetest.register_entity("signs_lib:text", {
-
 	initial_properties = {
 		collisionbox = { 0, 0, 0, 0, 0, 0 },
 		visual = "mesh",
