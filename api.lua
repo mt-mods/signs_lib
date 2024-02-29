@@ -1002,6 +1002,7 @@ end
 
 function signs_lib.register_sign(name, raw_def)
 	local def = table.copy(raw_def)
+	def.is_ground_content = false
 
 	if raw_def.entity_info == "standard" then
 		def.entity_info = {
