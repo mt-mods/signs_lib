@@ -467,15 +467,6 @@ signs_lib.charwidth_wide32 = build_char_db(32)
 
 local math_max = math.max
 
-local function fill_line(x, y, w, c, font_size, colorbgw)
-	c = c or "0"
-	local tex = { }
-	for xx = 0, math.max(0, w), colorbgw do
-		table.insert(tex, (":%d,%d=signs_lib_color_"..font_size.."px_%s.png"):format(x + xx, y, c))
-	end
-	return table.concat(tex)
-end
-
 -- make char texture file name
 -- if texture file does not exist use fallback texture instead
 local function char_tex(font_name, ch)
@@ -510,6 +501,26 @@ local function char_tex_wide(font_name, ch)
 		return tex, exists
 	end
 end
+
+-- sign colour table
+local colgrid = {
+	["0"] = "000000", -- black
+	["1"] = "000080", -- blue
+	["2"] = "008000", -- dark green
+	["3"] = "008080", -- dark cyan
+	["4"] = "800000", -- red
+	["5"] = "800080", -- purple
+	["6"] = "804000", -- brown
+	["7"] = "808080", -- light grey
+	["8"] = "404040", -- dark grey
+	["9"] = "8080ff", -- light blue
+	["A"] = "80ff80", -- green
+	["B"] = "80ffff", -- cyan
+	["C"] = "ff8080", -- skin pink
+	["D"] = "ff80ff", -- pink
+	["E"] = "ffff00", -- yellow
+	["F"] = "ffffff"  -- white
+}
 
 local function make_line_texture(line, lineno, pos, line_width, line_height, cwidth_tab, font_size, colorbgw, cwidth_tab_wide, force_unicode_font)
 	local width = 0
@@ -647,35 +658,24 @@ local function make_line_texture(line, lineno, pos, line_width, line_height, cwi
 	local xpos = start_xpos
 	local ypos = (line_height + def.line_spacing)* lineno + def.y_offset
 
-	cur_color = nil
-
 	for word_i, word in ipairs(words) do
 		local xoffs = (xpos - start_xpos)
 		if (xoffs > 0) and ((xoffs + word.w) > maxw) then
-			table.insert(texture, fill_line(xpos, ypos, maxw, "n", font_size, colorbgw))
 			xpos = start_xpos
 			ypos = ypos + line_height + def.line_spacing
 			lineno = lineno + 1
 			if lineno >= def.number_of_lines then break end
-			table.insert(texture, fill_line(xpos, ypos, maxw, cur_color, font_size, colorbgw))
 		end
 		for ch_i, ch in ipairs(word.chars) do
-			if ch.col ~= cur_color then
-				cur_color = ch.col
-				table.insert(texture, fill_line(xpos + ch.off, ypos, maxw, cur_color, font_size, colorbgw))
-			end
-			table.insert(texture, (":%d,%d=%s"):format(xpos + ch.off, ypos, ch.tex))
+
+			-- colorize character texture
+			local newtex = ch.tex .. '\\^[colorize\\:#' .. colgrid[ch.col]
+
+			table.insert(texture, (":%d,%d=%s"):format(xpos + ch.off, ypos, newtex))
 		end
-		table.insert(
-			texture,
-			(":%d,%d="):format(xpos + word.w, ypos) .. char_tex(font_name, " ")
-		)
 		xpos = xpos + word.w + cwidth_tab[" "]
 		if xpos >= (line_width + cwidth_tab[" "]) then break end
 	end
-
-	table.insert(texture, fill_line(xpos, ypos, maxw, "n", font_size, colorbgw))
-	table.insert(texture, fill_line(start_xpos, ypos + line_height, maxw, "n", font_size, colorbgw))
 
 	return table.concat(texture), lineno
 end
@@ -721,7 +721,7 @@ function signs_lib.make_sign_texture(lines, pos)
 		table.insert(texture, linetex)
 		lineno = ln + 1
 	end
-	table.insert(texture, "^[makealpha:0,0,0")
+
 	return table.concat(texture, "")
 end
 
