@@ -536,7 +536,7 @@ local function make_line_texture(line, lineno, pos, line_width, line_height, cwi
 
 	-- We check which chars are available here.
 	for word_i, word in ipairs(line) do
-		local chars = { }
+		local chars = {}
 		local ch_offs = 0
 		local word_l = #word
 		local i = 1
@@ -594,7 +594,7 @@ local function make_line_texture(line, lineno, pos, line_width, line_height, cwi
 					end
 				end
 				if w then
-					width = width + w + 1
+					width = width + w
 					if width >= (line_width - cwidth_tab[" "]) then
 						width = 0
 					else
@@ -626,7 +626,7 @@ local function make_line_texture(line, lineno, pos, line_width, line_height, cwi
 			else
 				local w = cwidth_tab[c]
 				if w then
-					width = width + w + 1
+					width = width + w
 					if width >= (line_width - cwidth_tab[" "]) then
 						width = 0
 					else
@@ -644,7 +644,7 @@ local function make_line_texture(line, lineno, pos, line_width, line_height, cwi
 			end
 			i = i + 1
 		end
-		width = width + cwidth_tab[" "] + 1
+		width = width + cwidth_tab[" "]
 		maxw = math_max(width, maxw)
 		table.insert(words, { chars=chars, w=ch_offs })
 	end
