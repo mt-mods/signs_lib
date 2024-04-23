@@ -944,7 +944,7 @@ function signs_lib.after_place_node(pos, placer, itemstack, pointed_thing, locke
 
 	local signname = itemstack:get_name()
 
-	-- incase player has sign nodes they shouldnt, remove extensions for normal sign
+	-- in case player has sign nodes they shouldn't, remove extensions for normal sign
 	local no_wall_name = string.gsub(signname, "_wall", "")
 	no_wall_name = string.gsub(no_wall_name, "_yard", "")
 	no_wall_name = string.gsub(no_wall_name, "_hanging", "")
