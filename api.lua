@@ -749,12 +749,6 @@ function signs_lib.rightclick_sign(pos, node, player, itemstack, pointed_thing)
 end
 
 function signs_lib.destruct_sign(pos)
-	local meta = minetest.get_meta(pos)
-	local glow = meta:get_string("glow")
-	if glow ~= "" and not minetest.is_creative_enabled("") then
-		local num = tonumber(glow)
-		minetest.add_item(pos, ItemStack(signs_lib.glow_item .. " " .. num))
-	end
 	signs_lib.delete_objects(pos)
 end
 
@@ -762,6 +756,10 @@ function signs_lib.blast_sign(pos, intensity)
 	if signs_lib.can_modify(pos, "") then
 		local node = minetest.get_node(pos)
 		local drops = minetest.get_node_drops(node, "tnt:blast")
+		local glow = tonumber(minetest.get_meta(pos):get_string("glow"))
+		if glow and glow > 0 then
+			drops[#drops + 1] = signs_lib.glow_item .. " " .. glow
+		end
 		minetest.remove_node(pos)
 		return drops
 	end
